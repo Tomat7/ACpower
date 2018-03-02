@@ -1,0 +1,18 @@
+# Syntax Coloring Map For ModbusIP
+
+# Datatypes (KEYWORD1)
+ACpower    	KEYWORD1
+
+# Methods and Functions (KEYWORD2)
+init		KEYWORD2
+control		KEYWORD2
+setpower	KEYWORD2
+getpower    KEYWORD2
+Pnow		KEYWORD2
+Pset		KEYWORD2
+Inow		KEYWORD2
+Iset		KEYWORD2
+Uset		KEYWORD2
+Unow		KEYWORD2
+
+# Constants (LITERAL1)
