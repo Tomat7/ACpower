@@ -1,6 +1,9 @@
 # ACpower
 Arduino Hi-Power regulator for AC devices
 
+__Warning! Hi voltage is dangerous! Be careful!__
+=================================================
+
 See schemas and other details/examples on http://forum.homedistiller.ru/index.php?topic=166750.0
 
 Connections:
@@ -14,6 +17,9 @@ Regulating algorithm (c) Chatterbox.
 
 Many thanks to both of them!
 
+
+__ Внимание! Высокое напряжение опасно для жизни! Будьте аккуратны и внимательны! __
+====================================================================================
 
 * Оригинальная идея (c) Sebra
 * Алгоритм регулирования (c) Chatterbox
