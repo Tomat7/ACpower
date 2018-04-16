@@ -12,7 +12,7 @@ See schemas and other details/examples on http://forum.homedistiller.ru/index.ph
 * **D5** - Triac
 
 #### Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
-#### Converting to library and combining voltage&current - Tomat7
+#### Converting to library and combining voltage&current - Tomat7.
 
 __Внимание! Высокое напряжение опасно для жизни!__
 __Будьте аккуратны и внимательны!__
@@ -27,4 +27,4 @@ __Будьте аккуратны и внимательны!__
 * **D5** - управление триаком
 
 #### Оригинальная идея (c) Sebra, Алгоритм регулирования (c) Chatterbox
-#### Вольный перевод в библиотеку и совмещение регулятора тока и напряжения - Tomat7
+#### Вольный перевод в библиотеку и совмещение регулятора тока и напряжения - Tomat7.
