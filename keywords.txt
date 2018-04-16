@@ -1,4 +1,4 @@
-# Syntax Coloring Map For ModbusIP
+# Syntax Coloring Map 
 
 # Datatypes (KEYWORD1)
 ACpower    	KEYWORD1
