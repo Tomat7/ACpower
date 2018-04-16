@@ -5,14 +5,14 @@ __Warning! Hi voltage is dangerous! Be careful!__
 =================================================
 
 See schemas and other details/examples on http://forum.homedistiller.ru/index.php?topic=166750.0
-
-###### Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
-
 #### Connections:
 * **D3** - ZeroCross detector 
 * **D5** - Triac
 * **A0** - voltage meter 
 * **A1** - ACS712
+
+Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
+=============================================================================================
 
 __Внимание! Высокое напряжение опасно для жизни!__
 __Будьте аккуратны и внимательны!__
