@@ -11,7 +11,8 @@ See schemas and other details/examples on http://forum.homedistiller.ru/index.ph
 * **A0** - voltage meter 
 * **A1** - ACS712
 
-Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
+### Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
+
 =============================================================================================
 
 __Внимание! Высокое напряжение опасно для жизни!__
