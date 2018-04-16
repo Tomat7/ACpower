@@ -8,7 +8,7 @@ See schemas and other details/examples on http://forum.homedistiller.ru/index.ph
 ### Connections:
 * **D3** - ZeroCross detector 
 * **D5** - Triac
-* **A0** - voltage meter 
+* **A0** - Voltage meter 
 * **A1** - ACS712
 
 #### Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
@@ -24,8 +24,8 @@ __Будьте аккуратны и внимательны!__
 * Вольный перевод в библиотеку Tomat7
 * Version 0.7
 ### Подключения:
-**A0 - подключение "измерителя" напряжения (трансформатор, диодный мост, делитель напряжения)
-**A1 - подключение датчика тока ACS712
-**D5 - управление триаком
-**D3** - детектор нуля
+* **A0 - подключение "измерителя" напряжения (трансформатор, диодный мост, делитель напряжения)
+* **A1 - подключение датчика тока ACS712
+* **D5 - управление триаком
+* **D3** - детектор нуля
 
