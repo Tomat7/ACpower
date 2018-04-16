@@ -13,8 +13,6 @@ See schemas and other details/examples on http://forum.homedistiller.ru/index.ph
 
 ### Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
 
-=============================================================================================
-
 __Внимание! Высокое напряжение опасно для жизни!__
 __Будьте аккуратны и внимательны!__
 ====================================================================================
