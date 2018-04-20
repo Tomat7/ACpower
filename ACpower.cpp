@@ -49,6 +49,12 @@ ISR(ADC_vect) {
 	ACpower::GetADC_int();
 }
 
+ACpower::ACpower()
+{
+	Pmax = 3000;
+	Iratio = ACS_RATIO20;
+}
+
 ACpower::ACpower(uint16_t Pm)
 {
 	Pmax = Pm;

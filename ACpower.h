@@ -41,6 +41,7 @@
 class ACpower
 {
 public:
+	ACpower();
 	ACpower(uint16_t Pm);
 	ACpower(uint16_t Pm, byte ACStype);
 	
