@@ -24,8 +24,10 @@ volatile unsigned int ACpower::_cntr;
 volatile unsigned int ACpower::_zero;
 volatile unsigned long ACpower::_Summ;
 volatile unsigned int ACpower::_angle;
-volatile static float ACpower::_sqrI;
-volatile static float ACpower::_sqrU; 
+volatile static float ACpower::Inow;
+volatile static float ACpower::Unow; 
+volatile static float ACpower::Uratio;
+volatile static float ACpower::Iratio;
 
 #ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
@@ -50,6 +52,15 @@ ISR(ADC_vect) {
 ACpower::ACpower(uint16_t Pm)
 {
 	Pmax = Pm;
+	Iratio = ACS_RATIO20;
+}
+
+ACpower::ACpower(uint16_t Pm, byte ACStype)
+{
+	Pmax = Pm;
+	if 		(ACStype == 5) 	Iratio = ACS_RATIO5;
+	else if (ACStype == 20) Iratio = ACS_RATIO20;
+	else					Iratio = ACS_RATIO30;
 }
 
 void ACpower::init()
@@ -57,7 +68,7 @@ void ACpower::init()
 	init(1);
 }
 
-void ACpower::init(float Ur) //__attribute__((always_inline))
+void ACpower::init(float Ur)
 {  
 	Uratio = Ur;
 	pinMode(ZCROSS, INPUT);          //детектор нуля
@@ -74,7 +85,7 @@ void ACpower::init(float Ur) //__attribute__((always_inline))
 	//- Timer1 - Таймер задержки времени открытия триака после детектирования нуля (0 триак не откроется)
 	TCCR1A = 0x00;  //
 	TCCR1B = 0x00;    //
-	TCCR1B = (0 << CS12) | (1 << CS11); // | (1 << CS10); // Тактирование от CLK.
+	TCCR1B = (0 << CS12) | (1 << CS11); // | (1 << CS10); // Тактирование от CLK. 20000 отсчетов 1 полупериод
 	OCR1A = 0;                   // Верхняя граница счета. Диапазон от 0 до 65535.
 	TIMSK1 |= (1 << OCIE1A);     // Разрешить прерывание по совпадению
 	attachInterrupt(digitalPinToInterrupt(ZCROSS), ZeroCross_int, RISING);//вызов прерывания при детектировании нуля
@@ -88,13 +99,14 @@ void ACpower::init(float Ur) //__attribute__((always_inline))
 
 void ACpower::control()
 {	
-	uint16_t Pold = Pavg;
+	uint16_t Pold;
 	//Inow = (_sqrI > 20) ? sqrt(_sqrI) * ACS_RATIO : 0;
 	//Unow = (_sqrU > 50) ? sqrt(_sqrU) * Uratio : 0;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
 	
-	Inow = sqrt(_sqrI) * ACS_RATIO;
-	Unow = sqrt(_sqrU) * Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+	//Inow = sqrt(_sqrI) * ACS_RATIO;
+	//Unow = sqrt(_sqrU) * Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
 
+	Pold = Pavg;
 	Pavg = Pnow;
 	Pnow = Inow * Unow;
 	Pavg = (Pnow + Pavg + Pold) / 3;
@@ -107,7 +119,7 @@ void ACpower::control()
 	
 	_angle = Angle;
 	
-return;
+	return;
 }
 
 
@@ -130,15 +142,15 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 		takeADC = false;
 		if (getI) 
 		{
-			_sqrI = _Summ / _cntr;
 			cbi(ADMUX, MUX0);
 			getI = false;
+			Inow = sqrt(_Summ / _cntr) * Iratio;
 		}
 		else
 		{
-			_sqrU = _Summ / _cntr;
 			sbi(ADMUX, MUX0);
 			getI = true;
+			Unow = sqrt(_Summ / _cntr) * Uratio;  
 		}
 		_Summ = 0;
 		_zero = 0;

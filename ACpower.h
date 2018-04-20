@@ -19,7 +19,9 @@
 #define LIBVERSION "ACpower_v20180320 zeroI: "
 #define ZERO_OFFSET 100			// минимальный угол открытия. *** возможно нужно больше!! ***
 #define MAX_OFFSET 18000    	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
-#define ACS_RATIO 0.048828125	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
+#define ACS_RATIO5 0.024414063	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
+#define ACS_RATIO20 0.048828125	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
+#define ACS_RATIO30 0.073242188	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 #define ZCROSS 3			// пин подключения детектора нуля.
 #define TRIAC 5				// пин управляющий триаком. пока не проверялось! возможно дальше порт прямо указан в программе!
 #define PMIN 50				// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
@@ -40,22 +42,21 @@ class ACpower
 {
 public:
 	ACpower(uint16_t Pm);
-	//ACpower(uint16_t Pm, float Ur);
-	float Inow = 0;   		// переменная расчета RMS тока
-	float Unow = 0;   		// переменная расчета RMS напряжения
-
+	ACpower(uint16_t Pm, byte ACStype);
+	
+	volatile static float Inow;   		// переменная расчета RMS тока
+	volatile static float Unow;   		// переменная расчета RMS напряжения
+	volatile static float Uratio;
+	volatile static float Iratio;
+	
 	int Angle = MAX_OFFSET;
 	uint16_t Pavg;
 	uint16_t Pnow;
 	uint16_t Pset = 0;
 	uint16_t Pmax;
-	float Uratio;
-
-	uint16_t ADCperiod;		// DEBUG!! убрать
 
 	void init();
 	void init(float Ur);
-	//void init(uint16_t Pm);
 	
 	void control();
 	void setpower(uint16_t setP);
@@ -76,10 +77,6 @@ protected:
 	volatile static unsigned int _zero;
 	volatile static unsigned long _Summ;
 	volatile static unsigned int _angle;
-	volatile static float _sqrI;   		// I в квадрате
-	volatile static float _sqrU;   		// U в квадрате
-	//unsigned long _ADCmillis;
-	//unsigned long _ADCmicros;
 	#ifdef CALIBRATE_ZERO
 	volatile static int _zeroI;
 	#endif
