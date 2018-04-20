@@ -88,10 +88,13 @@ void ACpower::init(float Ur) //__attribute__((always_inline))
 
 void ACpower::control()
 {	
-	Inow = (_sqrI > 20) ? sqrt(_sqrI) * ACS_RATIO : 0;
-	Unow = (_sqrU > 50) ? sqrt(_sqrU) * Uratio : 0;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+	uint16_t Pold = Pavg;
+	//Inow = (_sqrI > 20) ? sqrt(_sqrI) * ACS_RATIO : 0;
+	//Unow = (_sqrU > 50) ? sqrt(_sqrU) * Uratio : 0;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
 	
-	Pold = Pavg;
+	Inow = sqrt(_sqrI) * ACS_RATIO;
+	Unow = sqrt(_sqrU) * Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+
 	Pavg = Pnow;
 	Pnow = Inow * Unow;
 	Pavg = (Pnow + Pavg + Pold) / 3;
@@ -103,7 +106,6 @@ void ACpower::control()
 	} else Angle = MAX_OFFSET;
 	
 	_angle = Angle;
-	//_ADCmillis = millis();		// DEBUG!!
 	
 return;
 }

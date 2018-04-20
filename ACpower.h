@@ -47,7 +47,6 @@ public:
 	int Angle = MAX_OFFSET;
 	uint16_t Pavg;
 	uint16_t Pnow;
-	uint16_t Pold;
 	uint16_t Pset = 0;
 	uint16_t Pmax;
 	float Uratio;
