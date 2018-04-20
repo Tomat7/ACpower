@@ -69,10 +69,10 @@ void ACpower::init(float Ur) //__attribute__((always_inline))
 	//- Timer1 - Таймер задержки времени открытия триака после детектирования нуля (0 триак не откроется)
 	TCCR1A = 0x00;  //
 	TCCR1B = 0x00;    //
-	TCCR1B = (0 << CS12) | (1 << CS11) | (1 << CS10); // Тактирование от CLK.
+	TCCR1B = (0 << CS12) | (1 << CS11); // | (1 << CS10); // Тактирование от CLK.
 	OCR1A = 0;                   // Верхняя граница счета. Диапазон от 0 до 65535.
 	TIMSK1 |= (1 << OCIE1A);     // Разрешить прерывание по совпадению
-	attachInterrupt(1, ZeroCross_int, RISING);//вызов прерывания при детектировании нуля
+	attachInterrupt(digitalPinToInterrupt(ZCROSS), ZeroCross_int, RISING);//вызов прерывания при детектировании нуля
 	Serial.print(F(LIBVERSION));
 	Serial.println(_zeroI);
 	getI = true;	// ??
@@ -81,12 +81,12 @@ void ACpower::init(float Ur) //__attribute__((always_inline))
 
 void ACpower::control()
 {	
-	if (_cntr == 1024)
+	if (_cntr == 256)
 	{	
 		//Serial.println(_Summ);				// DEBUG!! убрать
 		//Serial.println(_cntr);				// DEBUG!! убрать
 		ADCperiod = millis() - _ADCmillis;		// DEBUG!! убрать
-		_Summ >>= 10;
+		_Summ >>= 8;
 		if (getI)
 		{	// начинаем собирать НАПРЯЖЕНИЕ
 			//ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0);  
@@ -110,26 +110,24 @@ void ACpower::control()
 			getI = true;
 		}
 		
+		Pavg = Pnow;
 		Pnow = Inow * Unow;
-		
-		// Расчет угла открытия триака. здесь можно сразу считать _angle, но на средних и чуть меньше 
-		// мощностях "скачет" мощность из-за того, что на пике синусоиды 1 градус имеет "большой вес"
-		// т.е. изменение угла на 1 градус приводит к значительным выбросам или провалам мощности
-		// поэтому работаем с Angle, который в 4 раза больше чем нужный нам для счетчика _angle.
+		Pavg = (Pnow + Pavg) / 2;
 		
 		if (Pset)	
 		{			
 			Angle += Pnow - Pset;
-			Angle = constrain(Angle, ZERO_OFFSET<<2, MAX_OFFSET<<2);
-		} else Angle = MAX_OFFSET<<2;
+			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
+		} else Angle = MAX_OFFSET;
 		
-		_angle = Angle>>2;			// *! Angle в 4 раза больше чем нужный нам для счетчика _angle. 
+		_angle = Angle;
 		_ADCmillis = millis();		// DEBUG!!
 		_Summ = 0;
 		//cli();			// так в умных интернетах пишут, возможно это лишнее - ** и без этого работает **
 		_cntr = 1025;		// в счетчик установим "кодовое значение", а ZeroCross это проверим
 		//sei();
 		//ADCswitch = micros() - _ADCmicros;  // DEBUG!!
+		
 	}
 	return;
 }
@@ -144,8 +142,8 @@ void ACpower::setpower(uint16_t setPower)
 
 void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
-	TCNT1 = 0;  			//PORTD &= ~(1 << TRIAC); // установит "0" на выводе D5 - триак закроется
-	cbi(PORTD, TRIAC);
+	TCNT1 = 0;  			
+	cbi(PORTD, TRIAC);		//PORTD &= ~(1 << TRIAC); установит "0" на выводе D5 - триак закроется
 	OCR1A = int(_angle);	// это наверное можно и убрать
 	if (_cntr == 1025) 
 	{	
@@ -160,7 +158,7 @@ void ACpower::GetADC_int() //__attribute__((always_inline))
 	unsigned long adcData = 0; //мгновенные значения тока
 	byte An_pin = ADCL;
 	byte An = ADCH;
-	if (_cntr < 1024)
+	if (_cntr < 256)
 	{
 		adcData = ((An << 8) + An_pin);
 		if (getI) adcData -= _zeroI;

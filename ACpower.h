@@ -16,9 +16,9 @@
 
 #include "Arduino.h"
 
-#define LIBVERSION "ACpower_v20180320 zeroI: "
-#define ZERO_OFFSET 1			// минимальный угол открытия. *** возможно нужно больше!! ***
-#define MAX_OFFSET 2250     	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
+#define LIBVERSION "ACpower_v20180419 zeroI: "
+#define ZERO_OFFSET 100			// минимальный угол открытия. *** возможно нужно больше!! ***
+#define MAX_OFFSET 18000     	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
 #define ACS_RATIO 0.048828125	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 #define ZCROSS 3			// пин подключения детектора нуля.
 #define TRIAC 5				// пин управляющий триаком. пока не проверялось! возможно дальше порт прямо указан в программе!
@@ -45,8 +45,9 @@ public:
 	float Inow = 0;   		// переменная расчета RMS тока
 	float Unow = 0;   		// переменная расчета RMS напряжения
 
-	int Angle = MAX_OFFSET<<2;
+	int Angle = MAX_OFFSET;
 	uint16_t Pnow;
+	uint16_t Pavg;
 	uint16_t Pset = 0;
 	uint16_t Pmax;
 	float Uratio;
