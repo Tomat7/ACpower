@@ -143,7 +143,7 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 	cbi(PORTD, TRIAC);
 	OCR1A = int(_angle);	
 	
-	if (_zero == HW_COUNT) 
+	if (_zero == WAVE_COUNT) 
 	{ 
 		takeADC = false;
 		if (getI) 
@@ -179,7 +179,6 @@ void ACpower::GetADC_int() //__attribute__((always_inline))
 		adcData *= adcData;                 // возводим значение в квадрат
 		_Summ += adcData;                   // складываем квадраты измерений
 		_cntr++;
-		//return;
 	}
 	else if (_cntr == 0) takeADC = true;
 	return;
@@ -190,7 +189,7 @@ void ACpower::OpenTriac_int() //__attribute__((always_inline))
 	if (TCNT1 < MAX_OFFSET) sbi(PORTD, TRIAC);
 	//PORTD |= (1 << TRIAC);  - установит "1" и откроет триак
 	//PORTD &= ~(1 << TRIAC); - установит "0" и закроет триак
-	TCNT1 = 65535 - 200;  // Импульс включения симистора 65536 -  1 - 4 мкс, 2 - 8 мкс, 3 - 12 мкс и тд
+	TCNT1 = 65535 - 2000;  // Импульс включения симистора 65536 -  1 - 4 мкс, 2 - 8 мкс, 3 - 12 мкс и тд
 }
 
 void ACpower::CloseTriac_int() //__attribute__((always_inline))
