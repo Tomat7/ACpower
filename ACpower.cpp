@@ -77,7 +77,11 @@ void ACpower::init(byte ACS712type, float Uratio) //__attribute__((always_inline
 	if 		(ACS712type == 5)	_Iratio = ACS_RATIO5;
 	else if (ACS712type == 20)	_Iratio = ACS_RATIO20;
 	else if	(ACS712type == 30)	_Iratio = ACS_RATIO30;
-	else Serial.print(F("ERROR: ACS712 wrong type!"));
+	else 
+	{
+		Serial.print(F("ERROR: ACS712 wrong type!"));
+		_Iratio = 1;
+	}
 	
 	pinMode(_pinZCross, INPUT);          //детектор нуля
 	pinMode(_pinTriac, OUTPUT);          //тиристор

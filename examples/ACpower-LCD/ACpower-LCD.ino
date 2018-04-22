@@ -32,14 +32,24 @@ String T1, Var;
 
 LiquidCrystal_I2C lcd(0x3F, 16, 2); // 0x3F - адрес на шине I2C, проверяем программой i2c_scanner.ino
 
-ACpower TEH(MAXPOWER);		// регулятор не позволит установить мощность больше чем MAXPOWER
+ACpower TEH(MAXPOWER, 3, 5, A0, A1); 
+/*
+ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712)
+Pm - максимальная мощность. регулятор не позволит установить мощность больше чем MAXPOWER
+pinZeroCross - номер пина к которому подключен детектор нуля
+pinTriac - номер пина к которому вывод управления триаком
+pinVoltage - "имя" вывода к которому подключен "датчик напряжения" (трансформатор с обвязкой)
+pinACS712 - "имя" вывода к которому подключен "датчик тока" ACS712
+*/
+
+// ACpower TEH(MAXPOWER);		// = ACpower TEH(MAXPOWER, 3, 5, A0, A1); 
 
 void setup()
 {
 	Serial.begin(SERIALSPEED);
-	TEH.init();
-	lcd.init();       // Для подключения ЛСД экрана через I2C
-	lcd.backlight();      // Для подключения ЛСД экрана через I2C
+	TEH.init(20);		// допустимы только три значения: 20 - ACS712-20A, 30 - ACS712-30A, 5 - ACS712-5A
+	lcd.init();			// Для подключения ЛСД экрана через I2C
+	lcd.backlight();
 	delay(300);
 	Serial.println(F(SKETCHVERSION));
 }
