@@ -77,7 +77,7 @@ void ACpower::init(byte ACS712type, float Uratio) //__attribute__((always_inline
 	if 		(ACS712type == 5)	_Iratio = ACS_RATIO5;
 	else if (ACS712type == 20)	_Iratio = ACS_RATIO20;
 	else if	(ACS712type == 30)	_Iratio = ACS_RATIO30;
-	else Serial.print(F("ERROR! ACS712 wrong type."));
+	else Serial.print(F("ERROR: ACS712 wrong type!"));
 	
 	pinMode(_pinZCross, INPUT);          //детектор нуля
 	pinMode(_pinTriac, OUTPUT);          //тиристор
@@ -101,7 +101,10 @@ void ACpower::init(byte ACS712type, float Uratio) //__attribute__((always_inline
 	TIMSK1 |= (1 << OCIE1A);     // Разрешить прерывание по совпадению
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);//вызов прерывания при детектировании нуля
 	Serial.print(F(LIBVERSION));
-	Serial.println(_zeroI);
+	Serial.print(_zeroI);
+	String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
+	Serial.println(ACinfo);
+	ADMUX = _admuxI;
 	getI = true;	// ??
 	_Summ=0;		// ??
 }
@@ -115,22 +118,22 @@ void ACpower::control()
 		ADCperiod = millis() - _ADCmillis;		// DEBUG!! убрать
 		_Summ >>= 9;
 		if (getI)
-		{	// начинаем собирать НАПРЯЖЕНИЕ
+		{	
 			//ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0);  
 			// или короче ADMUX = 0x40; или еще правильнее ADMUX &= ~(1 << MUX0); 
 			// а вот так еще и понятно что это именно ClearBit, а не какой-то #&$<<|~@*
 			//cbi(ADMUX, MUX0);
-			ADMUX = _admuxU;
+			ADMUX = _admuxU;	// начинаем собирать НАПРЯЖЕНИЕ
 			Inow = (_Summ > 2) ? sqrt(_Summ) * _Iratio : 0;
 			getI = false;
 		}
 		else
-		{	// начинаем собирать ТОК 
+		{	
 			//ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (1 << MUX0);  
 			// или ADMUX = 0x41; или только один бит ADMUX |= (1 << MUX0);
 			// а так понятно что это именно SetBit
 			//sbi(ADMUX, MUX0)
-			ADMUX = _admuxI;;
+			ADMUX = _admuxI;	// начинаем собирать ТОК 
 			#ifdef EXTEND_U_RANGE		// типа расширим "динамический диапазон" измерений в 3.XX раза:-) 
 			Unow = (_Summ > 50) ? sqrt(_Summ) * _Uratio : 0;  	// требуется изменение схемы и перекалибровка подстроечником!
 			#else
@@ -145,7 +148,7 @@ void ACpower::control()
 		Pnow = Inow * Unow;
 		Pavg = (Pold + Pnow + Pavg) / 2;
 		
-		if (Pset)	
+		if (Pset > 0)	
 		{			
 			Angle += Pnow - Pset;
 			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
