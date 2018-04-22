@@ -45,10 +45,10 @@ public:
 	ACpower(uint16_t Pm);
 	ACpower(uint16_t Pm, byte ACStype);
 	
-	volatile static float Inow;   		// переменная расчета RMS тока
-	volatile static float Unow;   		// переменная расчета RMS напряжения
-	volatile static float Uratio;
-	volatile static float Iratio;
+	float Inow;   		// переменная расчета RMS тока
+	float Unow;   		// переменная расчета RMS напряжения
+	float Uratio;
+	float Iratio;
 	
 	int Angle = MAX_OFFSET;
 	uint16_t Pavg;
@@ -78,6 +78,8 @@ protected:
 	volatile static unsigned int _zero;
 	volatile static unsigned long _Summ;
 	volatile static unsigned int _angle;
+	volatile static float _sqrU;
+	volatile static float _sqrI;
 	#ifdef CALIBRATE_ZERO
 	volatile static int _zeroI;
 	#endif

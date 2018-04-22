@@ -24,10 +24,8 @@ volatile unsigned int ACpower::_cntr;
 volatile unsigned int ACpower::_zero;
 volatile unsigned long ACpower::_Summ;
 volatile unsigned int ACpower::_angle;
-volatile static float ACpower::Inow;
-volatile static float ACpower::Unow; 
-volatile static float ACpower::Uratio;
-volatile static float ACpower::Iratio;
+volatile static float ACpower::_sqrI;
+volatile static float ACpower::_sqrU; 
 
 #ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
@@ -109,8 +107,8 @@ void ACpower::control()
 	//Inow = (_sqrI > 20) ? sqrt(_sqrI) * ACS_RATIO : 0;
 	//Unow = (_sqrU > 50) ? sqrt(_sqrU) * Uratio : 0;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
 	
-	//Inow = sqrt(_sqrI) * ACS_RATIO;
-	//Unow = sqrt(_sqrU) * Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+	Inow = sqrt(_sqrI) * Iratio;
+	Unow = sqrt(_sqrU) * Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
 
 	Pold = Pavg;
 	Pavg = Pnow;
@@ -150,13 +148,13 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 		{
 			cbi(ADMUX, MUX0);
 			getI = false;
-			Inow = sqrt(_Summ / _cntr) * Iratio;
+			_sqrI = _Summ / _cntr;
 		}
 		else
 		{
 			sbi(ADMUX, MUX0);
 			getI = true;
-			Unow = sqrt(_Summ / _cntr) * Uratio;  
+			_sqrU = _Summ / _cntr;  
 		}
 		_Summ = 0;
 		_zero = 0;
