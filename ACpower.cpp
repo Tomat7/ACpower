@@ -150,7 +150,7 @@ void ACpower::control()
 		Pold = Pavg;
 		Pavg = Pnow;
 		Pnow = Inow * Unow;
-		Pavg = (Pold + Pnow + Pavg) / 2;
+		Pavg = (Pold + Pnow + Pavg) / 3;
 		
 		if (Pset > 0)	
 		{			
