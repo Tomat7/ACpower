@@ -22,6 +22,7 @@ volatile bool ACpower::getI;
 volatile unsigned int ACpower::_cntr;
 volatile unsigned long ACpower::_Summ;
 volatile unsigned int ACpower::_angle;
+volatile static byte ACpower::_pinTriac;
 #ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
 #endif
@@ -45,26 +46,52 @@ ISR(ADC_vect) {
 ACpower::ACpower(uint16_t Pm)
 {
 	Pmax = Pm;
+	_pinZCross = 3;
+	_pinTriac = 5;
+	_pinI = A1 - 14;
+	_pinU = A0 - 14;
+}
+
+ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712)
+{
+	Pmax = Pm;
+	_pinZCross = pinZeroCross;	// пин подключения детектора нуля.
+	_pinTriac = pinTriac;		// пин управляющий триаком. 
+	_pinI = pinACS712 - 14;		// аналоговый пин к которому подключен датчик ACS712
+	_pinU = pinVoltage - 14;	// аналоговый пин к которому подключен модуль измерения напряжения
 }
 
 void ACpower::init()
 {
-	init(1);
+	init(20, 1);
 }
 
-void ACpower::init(float Ur) //__attribute__((always_inline))
+void ACpower::init(byte ACS712type)
+{
+	init(ACS712type, 1);
+}
+
+void ACpower::init(byte ACS712type, float Uratio) //__attribute__((always_inline))
 {  
-	Uratio = Ur;
-	pinMode(ZCROSS, INPUT);          //детектор нуля
-	pinMode(TRIAC, OUTPUT);          //тиристор
+	_Uratio = Uratio;
+	if 		(ACS712type == 5)	_Iratio = ACS_RATIO5;
+	else if (ACS712type == 20)	_Iratio = ACS_RATIO20;
+	else if	(ACS712type == 30)	_Iratio = ACS_RATIO30;
+	else Serial.print(F("ERROR! ACS712 wrong type."));
+	
+	pinMode(_pinZCross, INPUT);          //детектор нуля
+	pinMode(_pinTriac, OUTPUT);          //тиристор
 	_angle = MAX_OFFSET;
-	cbi(PORTD, TRIAC);				//PORTD &= ~(1 << TRIAC);
+	cbi(PORTD, _pinTriac);				//PORTD &= ~(1 << TRIAC);
 	#ifdef CALIBRATE_ZERO
 	_zeroI = calibrate();
 	#endif
 	// настойка АЦП
-	ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (1 << MUX0); // начинаем со сбора тока
-	ADCSRA = B11101111; //Включение АЦП
+	ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0); // начинаем с "начала"
+	_admuxI = ADMUX | _pinI;
+	_admuxU = ADMUX | _pinU;
+	//Включение АЦП
+	ADCSRA = B11101111; 
 	ACSR = (1 << ACD);
 	//- Timer1 - Таймер задержки времени открытия триака после детектирования нуля (0 триак не откроется)
 	TCCR1A = 0x00;  //
@@ -72,7 +99,7 @@ void ACpower::init(float Ur) //__attribute__((always_inline))
 	TCCR1B = (0 << CS12) | (1 << CS11); // | (1 << CS10); // Тактирование от CLK.
 	OCR1A = 0;                   // Верхняя граница счета. Диапазон от 0 до 65535.
 	TIMSK1 |= (1 << OCIE1A);     // Разрешить прерывание по совпадению
-	attachInterrupt(digitalPinToInterrupt(ZCROSS), ZeroCross_int, RISING);//вызов прерывания при детектировании нуля
+	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);//вызов прерывания при детектировании нуля
 	Serial.print(F(LIBVERSION));
 	Serial.println(_zeroI);
 	getI = true;	// ??
@@ -92,8 +119,9 @@ void ACpower::control()
 			//ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0);  
 			// или короче ADMUX = 0x40; или еще правильнее ADMUX &= ~(1 << MUX0); 
 			// а вот так еще и понятно что это именно ClearBit, а не какой-то #&$<<|~@*
-			cbi(ADMUX, MUX0);
-			Inow = (_Summ > 2) ? sqrt(_Summ) * ACS_RATIO : 0;
+			//cbi(ADMUX, MUX0);
+			ADMUX = _admuxU;
+			Inow = (_Summ > 2) ? sqrt(_Summ) * _Iratio : 0;
 			getI = false;
 		}
 		else
@@ -101,18 +129,21 @@ void ACpower::control()
 			//ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (1 << MUX0);  
 			// или ADMUX = 0x41; или только один бит ADMUX |= (1 << MUX0);
 			// а так понятно что это именно SetBit
-			sbi(ADMUX, MUX0);
+			//sbi(ADMUX, MUX0)
+			ADMUX = _admuxI;;
 			#ifdef EXTEND_U_RANGE		// типа расширим "динамический диапазон" измерений в 3.XX раза:-) 
-			Unow = (_Summ > 50) ? sqrt(_Summ) * Uratio : 0;  	// требуется изменение схемы и перекалибровка подстроечником!
+			Unow = (_Summ > 50) ? sqrt(_Summ) * _Uratio : 0;  	// требуется изменение схемы и перекалибровка подстроечником!
 			#else
 			Unow = sqrt(_Summ);
 			#endif
 			getI = true;
 		}
 		
+		uint16_t Pold;
+		Pold = Pavg;
 		Pavg = Pnow;
 		Pnow = Inow * Unow;
-		Pavg = (Pnow + Pavg) / 2;
+		Pavg = (Pold + Pnow + Pavg) / 2;
 		
 		if (Pset)	
 		{			
@@ -143,7 +174,8 @@ void ACpower::setpower(uint16_t setPower)
 void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
 	TCNT1 = 0;  			
-	cbi(PORTD, TRIAC);		//PORTD &= ~(1 << TRIAC); установит "0" на выводе D5 - триак закроется
+	//cbi(PORTD, TRIAC);		//PORTD &= ~(1 << TRIAC); установит "0" на выводе D5 - триак закроется
+	cbi(PORTD, _pinTriac);
 	OCR1A = int(_angle);	// это наверное можно и убрать
 	if (_cntr == 1025) 
 	{	
@@ -173,7 +205,8 @@ void ACpower::GetADC_int() //__attribute__((always_inline))
 
 void ACpower::OpenTriac_int() //__attribute__((always_inline))
 {
-	if (TCNT1 < MAX_OFFSET) sbi(PORTD, TRIAC);
+	//if (TCNT1 < MAX_OFFSET) sbi(PORTD, TRIAC);
+	if (TCNT1 < MAX_OFFSET) sbi(PORTD, _pinTriac);
 	//PORTD |= (1 << TRIAC);  - установит "1" и откроет триак
 	//PORTD &= ~(1 << TRIAC); - установит "0" и закроет триак
 	TCNT1 = 65535 - 200;  // Импульс включения симистора 65536 -  1 - 4 мкс, 2 - 8 мкс, 3 - 12 мкс и тд
@@ -181,21 +214,22 @@ void ACpower::OpenTriac_int() //__attribute__((always_inline))
 
 void ACpower::CloseTriac_int() //__attribute__((always_inline))
 {
-	cbi(PORTD, TRIAC);
+	//cbi(PORTD, TRIAC);
+	cbi(PORTD, _pinTriac);
 	TCNT1 = OCR1A + 1;	
 }
 
 #ifdef CALIBRATE_ZERO
-int ACpower::calibrate() 
-{
-	int zero = 0;
-	for (int i = 0; i < 10; i++) {
-		delay(10);
-		zero += analogRead(A1);
+	int ACpower::calibrate() 
+	{
+		int zero = 0;
+		for (int i = 0; i < 10; i++) {
+			delay(10);
+			zero += analogRead();
+		}
+		zero /= 10;
+		return zero;
 	}
-	zero /= 10;
-	return zero;
-}
 #endif
 /*
 	//===========================================================Настройка АЦП
@@ -273,4 +307,4 @@ int ACpower::calibrate()
 	// где N - коэф. предделителя (1, 8, 64, 256 или 1024)
 	
 	TIMSK1 |= (1 << OCIE1A) | (1 << TOIE1); // Разрешить прерывание по совпадению и переполнению
-	*/
+*/
