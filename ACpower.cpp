@@ -118,12 +118,12 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 
 void ACpower::control()
 {	
-	if (_cntr == 512)
+	if (_cntr == 1024)
 	{	
 		//Serial.println(_Summ);				// DEBUG!! убрать
 		//Serial.println(_cntr);				// DEBUG!! убрать
 		ADCperiod = millis() - _ADCmillis;		// DEBUG!! убрать
-		_Summ >>= 9;
+		_Summ >>= 10;
 		if (getI)
 		{	
 			//ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0);  
@@ -201,7 +201,7 @@ void ACpower::GetADC_int() //__attribute__((always_inline))
 	unsigned long adcData = 0; //мгновенные значения тока
 	byte An_pin = ADCL;
 	byte An = ADCH;
-	if (_cntr < 512)
+	if (_cntr < 1024)
 	{
 		adcData = ((An << 8) + An_pin);
 		if (getI) adcData -= _zeroI;
