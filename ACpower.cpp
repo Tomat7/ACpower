@@ -24,8 +24,8 @@ volatile unsigned int ACpower::_cntr;
 volatile unsigned int ACpower::_zero;
 volatile unsigned long ACpower::_Summ;
 volatile unsigned int ACpower::_angle;
-volatile static float ACpower::_sqrI;
-volatile static float ACpower::_sqrU; 
+volatile float ACpower::_sqrI;
+volatile float ACpower::_sqrU; 
 
 #ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
@@ -148,13 +148,13 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 		{
 			cbi(ADMUX, MUX0);
 			getI = false;
-			_sqrI = _Summ / _cntr;
+			_sqrI = (float)_Summ / _cntr;
 		}
 		else
 		{
 			sbi(ADMUX, MUX0);
 			getI = true;
-			_sqrU = _Summ / _cntr;  
+			_sqrU = (float)_Summ / _cntr;  
 		}
 		_Summ = 0;
 		_zero = 0;
