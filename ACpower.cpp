@@ -28,13 +28,12 @@ volatile int ACpower::_zeroI;
 #endif
 //=== Обработка прерывания по совпадению OCR1A (угла открытия) и счетчика TCNT1 
 // (который сбрасывается в "0" по zero_crosss_int) 
-
 ISR(TIMER1_COMPA_vect) {
 	ACpower::OpenTriac_int();
 }
 
-// ==== Обработка прерывания по переполнению таймера. необходима для "гашения" триака 
-ISR (TIMER1_OVF_vect) { //timer1 overflow
+// ==== Обработка прерывания по совпадению OCR1A. необходима для "гашения" триака 
+ISR(TIMER1_COMPB_vect) {
 	ACpower::CloseTriac_int();
 }
 
@@ -102,8 +101,10 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	TCCR1A = 0x00;  //
 	TCCR1B = 0x00;    //
 	TCCR1B = (0 << CS12) | (1 << CS11); // | (1 << CS10); // Тактирование от CLK.
-	OCR1A = 0;                   // Верхняя граница счета. Диапазон от 0 до 65535.
-	TIMSK1 |= (1 << OCIE1A);     // Разрешить прерывание по совпадению
+	OCR1A = 0;					// Верхняя граница счета. Диапазон от 0 до 65535.
+	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
+	//TIMSK1 |= (1 << TOIE1);		// Разрешить прерывание по переполнению	
+	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);//вызов прерывания при детектировании нуля
 	
 	Serial.print(F(LIBVERSION));
@@ -184,8 +185,9 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
 	TCNT1 = 0;  			
 	//cbi(PORTD, TRIAC);		//PORTD &= ~(1 << TRIAC); установит "0" на выводе D5 - триак закроется
-	cbi(PORTD, _pinTriac);
+	//cbi(PORTD, _pinTriac);
 	OCR1A = int(_angle);	// это наверное можно и убрать
+	OCR1B = int(_angle + 1000);
 	if (_cntr == 1025) 
 	{	
 		//cli();			// так в умных интернетах пишут, возможно это лишнее - ** и без него работает **
@@ -218,14 +220,15 @@ void ACpower::OpenTriac_int() //__attribute__((always_inline))
 	if (TCNT1 < MAX_OFFSET) sbi(PORTD, _pinTriac);
 	//PORTD |= (1 << TRIAC);  - установит "1" и откроет триак
 	//PORTD &= ~(1 << TRIAC); - установит "0" и закроет триак
-	TCNT1 = 65535 - 200;  // Импульс включения симистора 65536 -  1 - 4 мкс, 2 - 8 мкс, 3 - 12 мкс и тд
+	//TCNT1 = 65535 - 200;  // Импульс включения симистора 65536 -  1 - 4 мкс, 2 - 8 мкс, 3 - 12 мкс и тд
+	//sbi(PORTD, _pinTriac);
 }
 
 void ACpower::CloseTriac_int() //__attribute__((always_inline))
 {
 	//cbi(PORTD, TRIAC);
 	cbi(PORTD, _pinTriac);
-	TCNT1 = OCR1A + 1;	
+	//TCNT1 = OCR1A + 1;	
 }
 
 #ifdef CALIBRATE_ZERO
