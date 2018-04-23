@@ -4,27 +4,14 @@
 #define MAXPOWER 3000
 #define SERIALSPEED 115200
 #define SHOWINTERVAL 1000
-#include "ACpower.h"
 
-/*
-Вход с детектора нуля - D3
-Выход на триак - D5
-Аналоговый вход с датчика тока - A1 (ACS712)
-Аналоговый вход с датчика напряжения - A0 (трансформатор с обвязкой подлюченный к ВЫХОДУ триака)
-*/
-
-// все подробности http://forum.homedistiller.ru/index.php?topic=166750.0
-
+// подробности http://forum.homedistiller.ru/index.php?topic=166750.0
 // каждую секунду в COM-порт выдается текущая и установленная мощность
 // (при отсутствии нагрузки может выдавать ерунду :)
 // для установки необходимой мощности нужно в COM-порт "дать команду" SPxxxx,
 // где xxxx мощность в ваттах
 
-
-uint16_t inst_P = 0;
-unsigned long msShow = 0;
-String T1, Var;
-
+#include "ACpower.h"
 ACpower TEH(MAXPOWER, 3, 5, A0, A1); 
 /*
 ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712)
@@ -36,6 +23,10 @@ pinACS712 - "имя" вывода к которому подключен "дат
 */
 // ACpower TEH(MAXPOWER);	// тоже допустимо и эквивалентно ACpower TEH(MAXPOWER, 3, 5, A0, A1); 
 
+uint16_t inst_P = 0;
+unsigned long msShow = 0;
+String T1, Var;
+
 void setup()
 {
 	Serial.begin(SERIALSPEED);
@@ -43,8 +34,7 @@ void setup()
 	// TEH.init(0.029, 1);	// вызов с двумя параметрами
 	// в этом случае задаётся не тип ACS712, а конкретный множитель для датчика тока (первый параметр)
 	// вторым параметром идет множитель напряжения - полезно если невозможно откалибровать подстроечником
-	lcd.init();				// Для подключения ЛСД экрана через I2C
-	delay(3000);
+	delay(300);
 	Serial.println(F(SKETCHVERSION));
 }
 

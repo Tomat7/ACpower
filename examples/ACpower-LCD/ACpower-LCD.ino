@@ -5,33 +5,21 @@
 #define MAXPOWER 3000
 #define SERIALSPEED 115200
 #define SHOWINTERVAL 1000
-#include "ACpower.h"
 #include <LiquidCrystal_I2C.h>
-// https://github.com/marcoschwartz/LiquidCrystal_I2C
+LiquidCrystal_I2C lcd(0x3F, 16, 2); // 0x3F - адрес на шине I2C, проверяем программой i2c_scanner.ino
 // Для подключения ЛСД экрана через I2C необходимо "найти" его адрес программой i2c_scanner.ino
+// https://github.com/marcoschwartz/LiquidCrystal_I2C
 
 /*
-Вход с детектора нуля - D3
-Выход на триак - D5
-Аналоговый вход с датчика тока - A1 (ACS712)
-Аналоговый вход с датчика напряжения - A0 (трансформатор с обвязкой подлюченный к ВЫХОДУ триака)
+все подробности http://forum.homedistiller.ru/index.php?topic=166750.0
+будьте аккуратны - высокое напряжение опасно для жизни!
+каждую секунду в COM-порт выдается текущая и установленная мощность
+(при отсутствии нагрузки может выдавать ерунду :)
+для установки необходимой мощности нужно в COM-порт "дать команду" SPxxxx,
+где xxxx мощность в ваттах
 */
 
-// все подробности http://forum.homedistiller.ru/index.php?topic=166750.0
-// будьте аккуратны - высокое напряжение опасно для жизни!
-
-// каждую секунду в COM-порт выдается текущая и установленная мощность
-// (при отсутствии нагрузки может выдавать ерунду :)
-// для установки необходимой мощности нужно в COM-порт "дать команду" SPxxxx,
-// где xxxx мощность в ваттах
-
-
-uint16_t inst_P = 0;
-unsigned long msShow = 0;
-String T1, Var;
-
-LiquidCrystal_I2C lcd(0x3F, 16, 2); // 0x3F - адрес на шине I2C, проверяем программой i2c_scanner.ino
-
+#include "ACpower.h"
 ACpower TEH(MAXPOWER, 3, 5, A0, A1); 
 /*
 ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712)
@@ -41,8 +29,11 @@ pinTriac - номер пина который управляет триаком 
 pinVoltage - "имя" вывода к которому подключен "датчик напряжения" (трансформатор с обвязкой) (A0-A7)
 pinACS712 - "имя" вывода к которому подключен "датчик тока" ACS712 (A0-A7)
 */
-
 // ACpower TEH(MAXPOWER);		// = ACpower TEH(MAXPOWER, 3, 5, A0, A1); 
+
+uint16_t inst_P = 0;
+unsigned long msShow = 0;
+String T1, Var;
 
 void setup()
 {
