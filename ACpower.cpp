@@ -68,20 +68,20 @@ void ACpower::init()
 
 void ACpower::init(byte ACS712type)
 {
-	init(ACS712type, 1);
-}
-
-void ACpower::init(byte ACS712type, float Uratio) //__attribute__((always_inline))
-{  
-	_Uratio = Uratio;
-	if 		(ACS712type == 5)	_Iratio = ACS_RATIO5;
-	else if (ACS712type == 20)	_Iratio = ACS_RATIO20;
-	else if	(ACS712type == 30)	_Iratio = ACS_RATIO30;
+	if 		(ACS712type == 5)	init(ACS_RATIO5, 1);
+	else if (ACS712type == 20)	init(ACS_RATIO20, 1);
+	else if	(ACS712type == 30)	init(ACS_RATIO30, 1);
 	else 
 	{
 		Serial.print(F("ERROR: ACS712 wrong type!"));
-		_Iratio = 1;
+		init(1, 1);
 	}
+}
+
+void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
+{  
+	_Uratio = Uratio;
+	_Iratio = Iratio;
 	
 	pinMode(_pinZCross, INPUT);          //детектор нуля
 	pinMode(_pinTriac, OUTPUT);          //тиристор
@@ -90,6 +90,7 @@ void ACpower::init(byte ACS712type, float Uratio) //__attribute__((always_inline
 	#ifdef CALIBRATE_ZERO
 	_zeroI = calibrate();
 	#endif
+	
 	// настойка АЦП
 	ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0); // начинаем с "начала"
 	_admuxI = ADMUX | _pinI;
@@ -104,6 +105,7 @@ void ACpower::init(byte ACS712type, float Uratio) //__attribute__((always_inline
 	OCR1A = 0;                   // Верхняя граница счета. Диапазон от 0 до 65535.
 	TIMSK1 |= (1 << OCIE1A);     // Разрешить прерывание по совпадению
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);//вызов прерывания при детектировании нуля
+	
 	Serial.print(F(LIBVERSION));
 	Serial.print(_zeroI);
 	String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
@@ -150,7 +152,7 @@ void ACpower::control()
 		Pold = Pavg;
 		Pavg = Pnow;
 		Pnow = Inow * Unow;
-		Pavg = (Pold + Pnow + Pavg) / 3;
+		Pavg = (Pold + Pnow + Pavg) / 3;	// назовём это средней мощностью
 		
 		if (Pset > 0)	
 		{			

@@ -55,7 +55,7 @@ public:
 
 	int Angle = MAX_OFFSET;
 	uint16_t Pnow;
-	uint16_t Pavg;
+	uint16_t Pavg;			// грубо говоря, это средняя мощность за 3 измерения
 	uint16_t Pset = 0;
 	uint16_t Pmax;
 
@@ -65,7 +65,7 @@ public:
 
 	void init();
 	void init(byte ACS712type);
-	void init(byte ACS712type, float Ur);
+	void init(float Iratio, float Uratio);
 	//void init(uint16_t Pm);
 	
 	void control();

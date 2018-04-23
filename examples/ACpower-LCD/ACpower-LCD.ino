@@ -47,8 +47,11 @@ pinACS712 - "имя" вывода к которому подключен "дат
 void setup()
 {
 	Serial.begin(SERIALSPEED);
-	TEH.init(20);		// допустимы только три значения: 20 - ACS712-20A, 30 - ACS712-30A, 5 - ACS712-5A
-	lcd.init();			// Для подключения ЛСД экрана через I2C
+	TEH.init(20);			// вызов с одним параметром - допустимы только три значения: 20 - ACS712-20A, 30 - ACS712-30A, 5 - ACS712-5A
+	// TEH.init(0.029, 1);	// вызов с двумя параметрами
+	// в этом случае задаётся не тип ACS712, а конкретный множитель для датчика тока (первый параметр)
+	// вторым параметром идет множитель напряжения - полезно если невозможно откалибровать подстроечником
+	lcd.init();				// Для подключения ЛСД экрана через I2C
 	lcd.backlight();
 	delay(300);
 	Serial.println(F(SKETCHVERSION));
@@ -70,6 +73,8 @@ void showInfo()
 {
 	Serial.print("Pnow=");
 	Serial.println(TEH.Pnow);
+	Serial.print("Pavg=");
+	Serial.println(TEH.Pavg);	// Pavg - это "средняя" мощность (грубо говоря - усредненная за 3 цикла подсчета)
 	Serial.print("Pset=");
 	Serial.println(TEH.Pset);
 
@@ -78,7 +83,7 @@ void showInfo()
 	Serial.print("I: ");
 	Serial.println(TEH.Inow);
 	Serial.print("Angle: ");
-	Serial.println(TEH.Angle / 4);
+	Serial.println(TEH.Angle);
 }
 
 void lcdInfo()
@@ -87,7 +92,7 @@ void lcdInfo()
 	lcd.print("          ");
 	lcd.setCursor(0, 0);
 	lcd.print("Pnow:");
-	lcd.print(TEH.Pnow);
+	lcd.print(TEH.Pavg);					// здесь покажем "среднюю" мощность
 	if (TEH.Pnow < 1000) lcd.print("w");
 	lcd.setCursor(10, 0);
 	lcd.print("U:");
