@@ -19,9 +19,14 @@
 //ACpower TEH;              // preinstatiate
 
 volatile bool ACpower::getI;
+volatile bool ACpower::takeADC;
 volatile unsigned int ACpower::_cntr;
+volatile unsigned int ACpower::_zero;
 volatile unsigned long ACpower::_Summ;
 volatile unsigned int ACpower::_angle;
+volatile float ACpower::_sqrI;
+volatile float ACpower::_sqrU; 
+
 #ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
 #endif
@@ -42,9 +47,24 @@ ISR(ADC_vect) {
 	ACpower::GetADC_int();
 }
 
+ACpower::ACpower()
+{
+	Pmax = 3000;
+	Iratio = ACS_RATIO20;
+}
+
 ACpower::ACpower(uint16_t Pm)
 {
 	Pmax = Pm;
+	Iratio = ACS_RATIO20;
+}
+
+ACpower::ACpower(uint16_t Pm, byte ACStype)
+{
+	Pmax = Pm;
+	if 		(ACStype == 5) 	Iratio = ACS_RATIO5;
+	else if (ACStype == 20) Iratio = ACS_RATIO20;
+	else					Iratio = ACS_RATIO30;
 }
 
 void ACpower::init()
@@ -52,7 +72,7 @@ void ACpower::init()
 	init(1);
 }
 
-void ACpower::init(float Ur) //__attribute__((always_inline))
+void ACpower::init(float Ur)
 {  
 	Uratio = Ur;
 	pinMode(ZCROSS, INPUT);          //детектор нуля
@@ -69,70 +89,43 @@ void ACpower::init(float Ur) //__attribute__((always_inline))
 	//- Timer1 - Таймер задержки времени открытия триака после детектирования нуля (0 триак не откроется)
 	TCCR1A = 0x00;  //
 	TCCR1B = 0x00;    //
-	TCCR1B = (0 << CS12) | (1 << CS11) | (1 << CS10); // Тактирование от CLK.
+	TCCR1B = (0 << CS12) | (1 << CS11); // | (1 << CS10); // Тактирование от CLK. 20000 отсчетов 1 полупериод
 	OCR1A = 0;                   // Верхняя граница счета. Диапазон от 0 до 65535.
 	TIMSK1 |= (1 << OCIE1A);     // Разрешить прерывание по совпадению
-	attachInterrupt(1, ZeroCross_int, RISING);//вызов прерывания при детектировании нуля
+	attachInterrupt(digitalPinToInterrupt(ZCROSS), ZeroCross_int, RISING);//вызов прерывания при детектировании нуля
 	Serial.print(F(LIBVERSION));
 	Serial.println(_zeroI);
-	getI = true;	// ??
-	_Summ=0;		// ??
+	//getI = true;	// ??
+	//takeADC = false;
+	//_Summ = 0;		// ??
+	_zero = 0;
 }
 
 void ACpower::control()
 {	
-	if (_cntr == 1024)
-	{	
-		//Serial.println(_Summ);				// DEBUG!! убрать
-		//Serial.println(_cntr);				// DEBUG!! убрать
-		ADCperiod = millis() - _ADCmillis;		// DEBUG!! убрать
-		_Summ >>= 10;
-		if (getI)
-		{	// начинаем собирать НАПРЯЖЕНИЕ
-			//ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0);  
-			// или короче ADMUX = 0x40; или еще правильнее ADMUX &= ~(1 << MUX0); 
-			// а вот так еще и понятно что это именно ClearBit, а не какой-то #&$<<|~@*
-			cbi(ADMUX, MUX0);
-			Inow = (_Summ > 2) ? sqrt(_Summ) * ACS_RATIO : 0;
-			getI = false;
-		}
-		else
-		{	// начинаем собирать ТОК 
-			//ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (1 << MUX0);  
-			// или ADMUX = 0x41; или только один бит ADMUX |= (1 << MUX0);
-			// а так понятно что это именно SetBit
-			sbi(ADMUX, MUX0);
-			#ifdef EXTEND_U_RANGE		// типа расширим "динамический диапазон" измерений в 3.XX раза:-) 
-			Unow = (_Summ > 50) ? sqrt(_Summ) * Uratio : 0;  	// требуется изменение схемы и перекалибровка подстроечником!
-			#else
-			Unow = sqrt(_Summ);
-			#endif
-			getI = true;
-		}
-		
-		Pnow = Inow * Unow;
-		
-		// Расчет угла открытия триака. здесь можно сразу считать _angle, но на средних и чуть меньше 
-		// мощностях "скачет" мощность из-за того, что на пике синусоиды 1 градус имеет "большой вес"
-		// т.е. изменение угла на 1 градус приводит к значительным выбросам или провалам мощности
-		// поэтому работаем с Angle, который в 4 раза больше чем нужный нам для счетчика _angle.
-		
-		if (Pset)	
-		{			
-			Angle += Pnow - Pset;
-			Angle = constrain(Angle, ZERO_OFFSET<<2, MAX_OFFSET<<2);
-		} else Angle = MAX_OFFSET<<2;
-		
-		_angle = Angle>>2;			// *! Angle в 4 раза больше чем нужный нам для счетчика _angle. 
-		_ADCmillis = millis();		// DEBUG!!
-		_Summ = 0;
-		//cli();			// так в умных интернетах пишут, возможно это лишнее - ** и без этого работает **
-		_cntr = 1025;		// в счетчик установим "кодовое значение", а ZeroCross это проверим
-		//sei();
-		//ADCswitch = micros() - _ADCmicros;  // DEBUG!!
-	}
+	uint16_t Pold;
+	//Inow = (_sqrI > 20) ? sqrt(_sqrI) * ACS_RATIO : 0;
+	//Unow = (_sqrU > 50) ? sqrt(_sqrU) * Uratio : 0;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+	
+	Inow = sqrt(_sqrI) * Iratio;
+	Unow = sqrt(_sqrU) * Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+
+	Pold = Pavg;
+	Pavg = Pnow;
+	Pnow = Inow * Unow;
+	Pavg = (Pnow + Pavg + Pold) / 3;
+	
+	if (Pset)	
+	{			
+		Angle += Pnow - Pset;
+		Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
+	} else Angle = MAX_OFFSET;
+	
+	_angle = Angle;
+	
 	return;
 }
+
 
 void ACpower::setpower(uint16_t setPower)
 {	
@@ -146,13 +139,30 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
 	TCNT1 = 0;  			//PORTD &= ~(1 << TRIAC); // установит "0" на выводе D5 - триак закроется
 	cbi(PORTD, TRIAC);
-	OCR1A = int(_angle);	// это наверное можно и убрать
-	if (_cntr == 1025) 
-	{	
-		//cli();			// так в умных интернетах пишут, возможно это лишнее - ** и без него работает **
-		_cntr = 1050;		// в счетчик установим "кодовое значение", а в GetADC это проверим
-		//sei();
+	OCR1A = int(_angle);	
+	
+	if (_zero == WAVE_COUNT) 
+	{ 
+		takeADC = false;
+		if (getI) 
+		{
+			cbi(ADMUX, MUX0);
+			getI = false;
+			_sqrI = (float)_Summ / _cntr;
+		}
+		else
+		{
+			sbi(ADMUX, MUX0);
+			getI = true;
+			_sqrU = (float)_Summ / _cntr;  
+		}
+		_Summ = 0;
+		_zero = 0;
+		_cntr = 0;
 	}
+	
+	_zero++;
+	return;
 }
 
 void ACpower::GetADC_int() //__attribute__((always_inline))
@@ -160,16 +170,15 @@ void ACpower::GetADC_int() //__attribute__((always_inline))
 	unsigned long adcData = 0; //мгновенные значения тока
 	byte An_pin = ADCL;
 	byte An = ADCH;
-	if (_cntr < 1024)
+	if (takeADC)
 	{
 		adcData = ((An << 8) + An_pin);
 		if (getI) adcData -= _zeroI;
 		adcData *= adcData;                 // возводим значение в квадрат
 		_Summ += adcData;                   // складываем квадраты измерений
 		_cntr++;
-		return;
 	}
-	if (_cntr == 1050) _cntr = 0;
+	else if (_cntr == 0) takeADC = true;
 	return;
 }
 
@@ -178,7 +187,7 @@ void ACpower::OpenTriac_int() //__attribute__((always_inline))
 	if (TCNT1 < MAX_OFFSET) sbi(PORTD, TRIAC);
 	//PORTD |= (1 << TRIAC);  - установит "1" и откроет триак
 	//PORTD &= ~(1 << TRIAC); - установит "0" и закроет триак
-	TCNT1 = 65535 - 200;  // Импульс включения симистора 65536 -  1 - 4 мкс, 2 - 8 мкс, 3 - 12 мкс и тд
+	TCNT1 = 65535 - 2000;  // Импульс включения симистора 65536 -  1 - 4 мкс, 2 - 8 мкс, 3 - 12 мкс и тд
 }
 
 void ACpower::CloseTriac_int() //__attribute__((always_inline))
