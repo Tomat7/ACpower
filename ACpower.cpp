@@ -47,34 +47,27 @@ ISR(ADC_vect) {
 	ACpower::GetADC_int();
 }
 
-ACpower::ACpower()
-{
-	Pmax = 3000;
-	Iratio = ACS_RATIO20;
-}
-
 ACpower::ACpower(uint16_t Pm)
 {
 	Pmax = Pm;
 	Iratio = ACS_RATIO20;
 }
 
-ACpower::ACpower(uint16_t Pm, byte ACStype)
+ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712)
 {
 	Pmax = Pm;
-	if 		(ACStype == 5) 	Iratio = ACS_RATIO5;
-	else if (ACStype == 20) Iratio = ACS_RATIO20;
-	else					Iratio = ACS_RATIO30;
+	Iratio = ACS_RATIO20;
 }
-
+	
 void ACpower::init()
 {
-	init(1);
+	init(ACS_RATIO20, 1);
 }
 
-void ACpower::init(float Ur)
+void ACpower::init(float Ir, float Ur) 
 {  
 	Uratio = Ur;
+	Iratio = Ir;
 	pinMode(ZCROSS, INPUT);          //детектор нуля
 	pinMode(TRIAC, OUTPUT);          //тиристор
 	_angle = MAX_OFFSET;

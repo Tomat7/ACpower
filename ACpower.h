@@ -41,9 +41,8 @@
 class ACpower
 {
 public:
-	ACpower();
 	ACpower(uint16_t Pm);
-	ACpower(uint16_t Pm, byte ACStype);
+	ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712);
 	
 	float Inow;   		// переменная расчета RMS тока
 	float Unow;   		// переменная расчета RMS напряжения
@@ -57,8 +56,8 @@ public:
 	uint16_t Pmax;
 
 	void init();
-	void init(float Ur);
-	
+	void init(float Iratio, float Uratio);
+		
 	void control();
 	void setpower(uint16_t setP);
 	//=== Прерывания
