@@ -58,7 +58,7 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	Pmax = Pm;
 	Iratio = ACS_RATIO20;
 }
-	
+
 void ACpower::init()
 {
 	init(ACS_RATIO20, 1);
@@ -106,15 +106,18 @@ void ACpower::control()
 	Pold = Pavg;
 	Pavg = Pnow;
 	Pnow = Inow * Unow;
-	Pavg = (Pnow + Pavg + Pold) / 3;
 
 	// 	if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
-	if ((Pset > 0) && (Pavg != Pnow))
-	{			
-		Angle += Pnow - Pset;
-		Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
+	if (Pset > 0)
+	{	
+		Pavg = (Pnow + Pavg + Pold) / 3;
+		if (abs(Pavg - Pset) > 10)
+		{
+			Angle += Pnow - Pset;
+			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
+		}
 	} else Angle = MAX_OFFSET;
-	
+
 	_angle = Angle;
 	
 	return;
