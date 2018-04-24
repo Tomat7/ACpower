@@ -107,8 +107,9 @@ void ACpower::control()
 	Pavg = Pnow;
 	Pnow = Inow * Unow;
 	Pavg = (Pnow + Pavg + Pold) / 3;
-	
-	if ((Pset > 0) && (Pnow != Pavg))
+
+	// 	if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
+	if ((Pset > 0) && (Pavg != Pnow))
 	{			
 		Angle += Pnow - Pset;
 		Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
