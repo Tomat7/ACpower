@@ -21,7 +21,7 @@
 
 #include "Arduino.h"
 
-#define LIBVERSION "ACpower_v20180423 zeroI: "
+#define LIBVERSION "ACpower_v20180424 zeroI: "
 #define ZERO_OFFSET 100			// минимальный угол открытия. *** возможно нужно больше!! ***
 #define MAX_OFFSET 18000     	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
 #define PMIN 50				// минимально допустимая устанавливаемая мощность (наверное можно и меньше)

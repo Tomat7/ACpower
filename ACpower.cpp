@@ -72,7 +72,7 @@ void ACpower::init(byte ACS712type)
 	else if	(ACS712type == 30)	init(ACS_RATIO30, 1);
 	else 
 	{
-		Serial.print(F("ERROR: ACS712 wrong type! "));
+		Serial.println(F("ERROR: ACS712 wrong type!"));
 		init(1, 1);
 	}
 }
