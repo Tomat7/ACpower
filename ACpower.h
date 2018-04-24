@@ -13,8 +13,15 @@
 * детектор нуля может быть на D2 или D3
 * управление триаком почти на любом цифровом выходе порта D, то есть D2-D7
 * эти входы-выходы могут (или должны) задаваться при инициализации объекта ACpower
-* 	ACpower(uint16_t Pm);
+*
 *	ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712);
+	Pm - максимальная мощность. регулятор не позволит установить мощность больше чем MAXPOWER
+	pinZeroCross - номер пина к которому подключен детектор нуля (2 или 3)
+	pinTriac - номер пина который управляет триаком (2-7)
+	pinVoltage - "имя" вывода к которому подключен "датчик напряжения" - трансформатор с обвязкой (A0-A7)
+	pinACS712 - "имя" вывода к которому подключен "датчик тока" - ACS712 (A0-A7)
+*	
+* 	ACpower(uint16_t Pm) = ACpower(MAXPOWER, 3, 5, A0, A1) - так тоже можно
 */
 #ifndef ACpower_h
 #define ACpower_h
@@ -29,18 +36,18 @@
 #define ACS_RATIO20 0.048828125	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 #define ACS_RATIO30 0.073242188	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 
-//#define CALIBRATE_ZERO  // выполнять процедуру калибровки ноля датчика тока
+//#define CALIBRATE_ZERO  // выполнять процедуру калибровки ноля датчика тока, бывает нужно если ACS712 заметно врёт
 #ifndef CALIBRATE_ZERO
 #define _zeroI 512
 #endif
 
 #define EXTEND_U_RANGE
 /*
-увеличение "динамического диапазона" измерений напряжения в 2-3 раза
-требуется изменение схемы и перекалибровка измерителя напряжения
+увеличение в 2-3 раза "динамического диапазона" АЦП при измерении напряжения 
+требуется изменение схемы и подбора Uratio (возможно перекалибровка измерителя напряжения)
 при Uratio=1 подсчет напряжения идет как и раньше
 */
-//#define U_RATIO 0.2857	// множитель напряжения - теперь он в public и задается при создании объекта
+//#define U_RATIO 0.3	// множитель напряжения - теперь он в public и задается при создании объекта
 
 
 class ACpower
@@ -48,7 +55,7 @@ class ACpower
 public:
 	ACpower(uint16_t Pm);
 	ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712);
-	//ACpower(uint16_t Pm, float Ur);
+
 	float Inow = 0;   		// переменная расчета RMS тока
 	float Unow = 0;   		// переменная расчета RMS напряжения
 
@@ -58,14 +65,9 @@ public:
 	uint16_t Pset = 0;
 	uint16_t Pmax;
 
-
-	//uint8_t LagFactor = 1;	// DEBUG!! убрать
-	uint16_t ADCperiod;		// DEBUG!! убрать
-
 	void init();
 	void init(byte ACS712type);
 	void init(float Iratio, float Uratio);
-	//void init(uint16_t Pm);
 	
 	void control();
 	void setpower(uint16_t setP);
