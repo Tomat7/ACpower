@@ -74,8 +74,8 @@ void chkSerial() {
 				T1 = Var.substring(Var.indexOf("SP", 2) + 3); //команда
 				inst_P = T1.toFloat();          //Выставленная мощность с Serial
 				TEH.setpower(inst_P);
-				Var = "";
 			}
+				Var = "";
 		}
 	}
 }
