@@ -16,6 +16,34 @@
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
+/*
+	_summ2ADC
+		_summ2U
+		_IsummSQR
+		_UsummSQR
+		_ADCsummSQR
+		_I2summ
+		_sumUU
+		_sumII
+		_IsqrSumm
+		_sumIsqr
+		
+		_ADC2summ
+		_adc2summ
+		
+		_adcSumm
+		_Usumm
+		_SummSqrI
+		_summSqrU
+		_UsummSqr
+		_IsummSqr
+		
+		_countADC
+		_countU
+		_adcSummSqr
+		_summ2ADC
+*/
+
 volatile bool ACpower::getI;
 volatile unsigned int ACpower::_cntr;
 volatile unsigned long ACpower::_Summ;
@@ -85,7 +113,6 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	
 	pinMode(_pinZCross, INPUT);	//детектор нуля
 	pinMode(_pinTriac, OUTPUT);	//тиристор
-	_angle = MAX_OFFSET;
 	cbi(PORTD, _pinTriac);		//PORTD &= ~(1 << TRIAC);
 	#ifdef CALIBRATE_ZERO
 	_zeroI = calibrate();
@@ -98,13 +125,17 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	//Включение АЦП
 	ADCSRA = B11101111; 
 	ACSR = (1 << ACD);
+	
 	//- Timer1 - Таймер задержки времени открытия триака после детектирования нуля (0 триак не откроется)
 	TCCR1A = 0x00;
 	TCCR1B = 0x00;
 	TCCR1B = (0 << CS12) | (1 << CS11); // Тактирование от CLK. 20000 отсчетов 1 полупериод. (по таблице внизу)
-	OCR1A = 0;					
+	_angle = MAX_OFFSET;
+	OCR1A = int(_angle);
+	OCR1B = int(MAX_OFFSET + 1000);					
 	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
+	
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);	//вызов прерывания при детектировании нуля
 	
 	Serial.print(F(LIBVERSION));
@@ -169,7 +200,7 @@ void ACpower::ZeroCross_int()
 	TCNT1 = 0;  			
 	//cbi(PORTD, _pinTriac);			// PORTD &= ~(1 << TRIAC); установит "0" на выводе D5 - триак закроется
 	OCR1A = int(_angle);				// задаём угол открытия симистора
-	OCR1B = int(_angle + 1000);			// и угол закрытия симистора - при установленных параметрах таймера 1000 = 0.5 милисек
+	//OCR1B = int(_angle + 1000);			// и угол закрытия симистора - при установленных параметрах таймера 1000 = 0.5 милисек
 	if (_cntr == 1025) _cntr = 1050;	// в счетчик установим "кодовое значение", а в GetADC это проверим
 }
 
