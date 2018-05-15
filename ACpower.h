@@ -6,10 +6,22 @@
 * Version 0.7
 * 
 * A0 - подключение "измерителя" напряжения (трансформатор, диодный мост, делитель напряжения)
-* A1 - подключение датчика тока ACS712
+* A1 - подключение "выхода" датчика тока ACS712
 * D5 - управление триаком
 * D3 - детектор нуля
+* это условный "стандарт", потому как все эти  входы-выходы можно менять
+* детектор нуля может быть на D2 или D3
+* управление триаком почти на любом цифровом выходе порта D, то есть D2-D7
+* эти входы-выходы могут (или должны) задаваться при инициализации объекта ACpower
 *
+*	ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712);
+	Pm - максимальная мощность. регулятор не позволит установить мощность больше чем MAXPOWER
+	pinZeroCross - номер пина к которому подключен детектор нуля (2 или 3)
+	pinTriac - номер пина который управляет триаком (2-7)
+	pinVoltage - "имя" вывода к которому подключен "датчик напряжения" - трансформатор с обвязкой (A0-A7)
+	pinACS712 - "имя" вывода к которому подключен "датчик тока" - ACS712 (A0-A7)
+*	
+* 	ACpower(uint16_t Pm) = ACpower(MAXPOWER, 3, 5, A0, A1) - так тоже можно
 */
 #ifndef ACpower_h
 #define ACpower_h
@@ -22,8 +34,7 @@
 #define ACS_RATIO5 0.024414063	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 #define ACS_RATIO20 0.048828125	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 #define ACS_RATIO30 0.073242188	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
-#define ZCROSS 3			// пин подключения детектора нуля.
-#define TRIAC 5				// пин управляющий триаком. пока не проверялось! возможно дальше порт прямо указан в программе!
+
 #define PMIN 50				// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
 #define WAVE_COUNT 4			// сколько полуволн (half-wave)собирать ток и напряжение
 
@@ -56,6 +67,7 @@ public:
 	uint16_t Pmax;
 
 	void init();
+	void init(byte ACS712type);
 	void init(float Iratio, float Uratio);
 		
 	void control();
@@ -71,14 +83,29 @@ public:
 	#endif
 	
 protected:
+	
+	float _Uratio;
+	float _Iratio;
+
 	volatile static bool getI;
 	volatile static bool takeADC;
+	volatile static byte _admuxI;
+	volatile static byte _admuxU;
+	volatile static byte _zero;
+	
 	volatile static unsigned int _cntr;
-	volatile static unsigned int _zero;
+	volatile static unsigned int _Icntr;
+	volatile static unsigned int _Ucntr;
 	volatile static unsigned long _Summ;
+	volatile static unsigned long ACpower::_I2summ;
+	volatile static unsigned long ACpower::_U2summ;
 	volatile static unsigned int _angle;
-	volatile static float _sqrU;
-	volatile static float _sqrI;
+	
+	volatile static byte _pinTriac;
+	byte _pinZCross;
+	byte _pinI;
+	byte _pinU;
+	
 	#ifdef CALIBRATE_ZERO
 	volatile static int _zeroI;
 	#endif
