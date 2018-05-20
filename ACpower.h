@@ -57,8 +57,8 @@ public:
 	
 	float Inow;   		// переменная расчета RMS тока
 	float Unow;   		// переменная расчета RMS напряжения
-	float Uratio;
-	float Iratio;
+	//float Uratio;
+	//float Iratio;
 	
 	int Angle = MAX_OFFSET;
 	uint16_t Pavg;

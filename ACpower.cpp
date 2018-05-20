@@ -144,24 +144,15 @@ void ACpower::control()
 {	
 	if (_zero == 0)
 	{
-		_I2summ = 81;
-		_Icntr = 1;
-		_U2summ = 8100;
-		_Ucntr = 1;
 		_zero++;
 		uint16_t Pold;
-		//Inow = (_sqrI > 20) ? sqrt(_sqrI) * ACS_RATIO : 0;
-		//Unow = (_sqrU > 50) ? sqrt(_sqrU) * Uratio : 0;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
-		
-		Inow = sqrt((float)_I2summ / _Icntr) * Iratio;
-		Unow = sqrt((float)_U2summ / _Ucntr) * Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
-
+		Inow = sqrt((float)_I2summ / _Icntr) * _Iratio;
+		Unow = sqrt((float)_U2summ / _Ucntr) * _Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
 		Pold = Pavg;
 		Pavg = Pnow;
 		Pnow = Inow * Unow;
 		Pavg = (Pnow + Pavg + Pold) / 3;
-		//Pnow = 888 + _zero;
-		
+				
 		//if (abs(Pnow - Pset) < 10) _zero++;
 		// 	if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
 		
@@ -174,7 +165,6 @@ void ACpower::control()
 		} else Angle = MAX_OFFSET;
 		_angle = Angle;
 	}
-	//Pnow = 990 + _zero;
 	return;
 }
 
@@ -204,8 +194,8 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			getI = false;
 			_I2summ = _Summ;
 			_Icntr = _cntr;
-			_I2summ = 100;
-			_Icntr = 1;
+			//_I2summ = 100;
+			//_Icntr = 1;
 		}
 		else
 		{
@@ -213,8 +203,8 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			getI = true;
 			_U2summ = _Summ;
 			_Ucntr = _cntr;
-			_U2summ = 10000;
-			_Ucntr = 1;
+			//_U2summ = 10000;
+			//_Ucntr = 1;
 		}
 		_Summ = 0;
 		_zero = 0;
