@@ -126,46 +126,55 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	TCCR1B = (0 << CS12) | (1 << CS11); // Тактирование от CLK. 20000 отсчетов 1 полупериод. (по таблице внизу)
 	_angle = MAX_OFFSET;
 	OCR1A = int(_angle);				// для открытия триака
-	OCR1B = int(MAX_OFFSET + 1000);		// для закрытия триака			
+	OCR1B = int(MAX_OFFSET + 1000);		// для закрытия триака за ~500 мкс до ZeroCross			
 	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
 	
-	_zero == WAVE_COUNT;
+	//_zero == WAVE_COUNT;
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);	//вызов прерывания при детектировании нуля
 	
 	Serial.print(F(LIBVERSION));
 	Serial.print(_zeroI);
 	String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
 	Serial.println(ACinfo);
-	//takeADC = false;
+	takeADC = false;
 }
 
 void ACpower::control()
 {	
-	uint16_t Pold;
-	//Inow = (_sqrI > 20) ? sqrt(_sqrI) * ACS_RATIO : 0;
-	//Unow = (_sqrU > 50) ? sqrt(_sqrU) * Uratio : 0;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
-	
-	Inow = sqrt((float)_I2summ / _Icntr) * Iratio;
-	Unow = sqrt((float)_U2summ / _Ucntr) * Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+	if (_zero == 0)
+	{
+		_I2summ = 81;
+		_Icntr = 1;
+		_U2summ = 8100;
+		_Ucntr = 1;
+		_zero++;
+		uint16_t Pold;
+		//Inow = (_sqrI > 20) ? sqrt(_sqrI) * ACS_RATIO : 0;
+		//Unow = (_sqrU > 50) ? sqrt(_sqrU) * Uratio : 0;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+		
+		Inow = sqrt((float)_I2summ / _Icntr) * Iratio;
+		Unow = sqrt((float)_U2summ / _Ucntr) * Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
 
-	Pold = Pavg;
-	Pavg = Pnow;
-	Pnow = Inow * Unow;
-	
-	// 	if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
-	if ((Pset > 0) && (Pavg != Pnow))
-	{	
+		Pold = Pavg;
+		Pavg = Pnow;
+		Pnow = Inow * Unow;
 		Pavg = (Pnow + Pavg + Pold) / 3;
-		if (abs(Pavg - Pset) > 10)
-		{
+		//Pnow = 888 + _zero;
+		
+		//if (abs(Pnow - Pset) < 10) _zero++;
+		// 	if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
+		
+		if (Pset > 0)
+		{	
 			Angle += Pnow - Pset;
 			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
-		}
-	} else Angle = MAX_OFFSET;
-
-	_angle = Angle;
-	
+			//if abs(Angle - _angle) < 10) zero++;
+			
+		} else Angle = MAX_OFFSET;
+		_angle = Angle;
+	}
+	//Pnow = 990 + _zero;
 	return;
 }
 
@@ -182,9 +191,11 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
 	TCNT1 = 0;  			//PORTD &= ~(1 << TRIAC); // установит "0" на выводе D5 - триак закроется
 	//cbi(PORTD, TRIAC);
-	OCR1A = int(_angle);	
+	OCR1A = int(_angle);
+	//OCR1B = int(_angle + 1000); 
+	_zero++;
 	
-	if (_zero == WAVE_COUNT) 
+	if (_zero == (WAVE_COUNT + 1)) 
 	{ 
 		takeADC = false;
 		if (getI) 
@@ -193,6 +204,8 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			getI = false;
 			_I2summ = _Summ;
 			_Icntr = _cntr;
+			_I2summ = 100;
+			_Icntr = 1;
 		}
 		else
 		{
@@ -200,13 +213,14 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			getI = true;
 			_U2summ = _Summ;
 			_Ucntr = _cntr;
+			_U2summ = 10000;
+			_Ucntr = 1;
 		}
 		_Summ = 0;
 		_zero = 0;
 		_cntr = 0;
 	}
 	
-	_zero++;
 	return;
 }
 
@@ -229,7 +243,7 @@ void ACpower::GetADC_int() //__attribute__((always_inline))
 
 void ACpower::OpenTriac_int() //__attribute__((always_inline))
 {
-	if (TCNT1 < MAX_OFFSET) sbi(PORTD, TRIAC);
+	if (TCNT1 < MAX_OFFSET) sbi(PORTD, _pinTriac);
 	//PORTD |= (1 << TRIAC);  - установит "1" и откроет триак
 	//PORTD &= ~(1 << TRIAC); - установит "0" и закроет триак
 	//TCNT1 = 65535 - 2000;  // Импульс включения симистора 65536 -  1 - 4 мкс, 2 - 8 мкс, 3 - 12 мкс и тд
@@ -237,7 +251,7 @@ void ACpower::OpenTriac_int() //__attribute__((always_inline))
 
 void ACpower::CloseTriac_int() //__attribute__((always_inline))
 {
-	cbi(PORTD, TRIAC);
+	cbi(PORTD, _pinTriac);
 	//TCNT1 = OCR1A + 1;	
 }
 
