@@ -130,7 +130,6 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
 	
-	//_zero == WAVE_COUNT;
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);	//вызов прерывания при детектировании нуля
 	
 	Serial.print(F(LIBVERSION));
@@ -144,8 +143,8 @@ void ACpower::control()
 {	
 	if (_zero == 0)
 	{
-		_zero++;
 		uint16_t Pold;
+		_zero++;
 		Inow = sqrt((float)_I2summ / _Icntr) * _Iratio;
 		Unow = sqrt((float)_U2summ / _Ucntr) * _Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
 		Pold = Pavg;
@@ -179,10 +178,11 @@ void ACpower::setpower(uint16_t setPower)
 
 void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
-	TCNT1 = 0;  			//PORTD &= ~(1 << TRIAC); // установит "0" на выводе D5 - триак закроется
+	TCNT1 = 0;  			
+	//PORTD &= ~(1 << TRIAC); // установит "0" на выводе D5 - триак закроется
 	//cbi(PORTD, TRIAC);
 	OCR1A = int(_angle);
-	//OCR1B = int(_angle + 1000); 
+	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
 	_zero++;
 	
 	if (_zero == (WAVE_COUNT + 1)) 
@@ -194,8 +194,6 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			getI = false;
 			_I2summ = _Summ;
 			_Icntr = _cntr;
-			//_I2summ = 100;
-			//_Icntr = 1;
 		}
 		else
 		{
@@ -203,8 +201,6 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			getI = true;
 			_U2summ = _Summ;
 			_Ucntr = _cntr;
-			//_U2summ = 10000;
-			//_Ucntr = 1;
 		}
 		_Summ = 0;
 		_zero = 0;

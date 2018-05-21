@@ -28,7 +28,7 @@
 
 #include "Arduino.h"
 
-#define LIBVERSION "ACpower_v20180320 zeroI: "
+#define LIBVERSION "ACpower_v20180520 zeroI: "
 #define ZERO_OFFSET 100			// минимальный угол открытия. *** возможно нужно больше!! ***
 #define MAX_OFFSET 18000    	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
 #define ACS_RATIO5 0.024414063	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
@@ -36,7 +36,7 @@
 #define ACS_RATIO30 0.073242188	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 
 #define PMIN 50				// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
-#define WAVE_COUNT 4			// сколько полуволн (half-wave)собирать ток и напряжение
+#define WAVE_COUNT 8			// сколько полуволн (half-wave) собирать/считать ток и напряжение
 
 //#define CALIBRATE_ZERO  // выполнять процедуру калибровки ноля датчика тока
 #ifndef CALIBRATE_ZERO
@@ -57,9 +57,7 @@ public:
 	
 	float Inow;   		// переменная расчета RMS тока
 	float Unow;   		// переменная расчета RMS напряжения
-	//float Uratio;
-	//float Iratio;
-	
+
 	int Angle = MAX_OFFSET;
 	uint16_t Pavg;
 	uint16_t Pnow;
