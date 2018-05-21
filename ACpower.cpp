@@ -59,10 +59,6 @@ ACpower::ACpower(uint16_t Pm)
 	_pinTriac = 5;
 	_pinI = A1 - 14;
 	_pinU = A0 - 14;
-	//_angle = MAX_OFFSET;
-	//takeADC = false;
-	//_cntr = 1025;
-	//_zero = 0;
 }
 
 ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712)
@@ -72,10 +68,6 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_pinTriac = pinTriac;		// пин управляющий триаком. 
 	_pinI = pinACS712 - 14;		// аналоговый пин к которому подключен датчик ACS712
 	_pinU = pinVoltage - 14;	// аналоговый пин к которому подключен модуль измерения напряжения
-	//_angle = MAX_OFFSET;
-	//takeADC = false;
-	//_cntr = 1025;
-	//_zero = 0;
 }
 
 void ACpower::init()
@@ -83,22 +75,16 @@ void ACpower::init()
 	init(ACS_RATIO20, 1);
 }
 
-void ACpower::init(byte ACS712type)
+void ACpower::init(float Iratio, float Uratio)
 {
-	if 		(ACS712type == 5)	init(ACS_RATIO5, 1);
-	else if (ACS712type == 20)	init(ACS_RATIO20, 1);
-	else if	(ACS712type == 30)	init(ACS_RATIO30, 1);
-	else 
-	{
-		Serial.println(F("ERROR: ACS712 wrong type!"));
-		init(1, 1);
-	}
+	init(Iratio, Uratio, true);
 }
 
-void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
+void ACpower::init(float Iratio, float Uratio, bool SerialInfo)
 {  
 	_Iratio = Iratio;
-	_Uratio = Uratio;	// обычно Uratio = 1, но при этом диапазон АЦП Ардуино используется от 0 до 220 (до 310)
+	_Uratio = Uratio;	
+	// обычно Uratio = 1, но при этом диапазон АЦП Ардуино используется от 0 до 220 (до 310)
 	// после изменении схемы возможно использовать весь диапазон АЦП (до 1023) но требуется подбор Uratio
 	// и возможно перекалибровка если Uratio не удастся подобрать в пределах от 1 до 0.3 
 	
@@ -115,7 +101,8 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	_admuxU = ADMUX | _pinU;	// и напряжения
 	ADMUX = _admuxI;			// начинаем со сбора тока
 	getI = true;
-	_Summ=0;
+	takeADC = false;
+	//_Summ=0;
 	//Включение АЦП
 	ADCSRA = B11101111; 
 	ACSR = (1 << ACD);
@@ -132,11 +119,14 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);	//вызов прерывания при детектировании нуля
 	
-	Serial.print(F(LIBVERSION));
-	Serial.print(_zeroI);
-	String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
-	Serial.println(ACinfo);
-	takeADC = false;
+	if (SerialInfo)
+	{
+		Serial.print(F(LIBVERSION));
+		Serial.print(_zeroI);
+		String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
+		Serial.println(ACinfo);
+	}
+	return;
 }
 
 void ACpower::control()
@@ -146,21 +136,19 @@ void ACpower::control()
 		uint16_t Pold;
 		_zero++;
 		Inow = sqrt((float)_I2summ / _Icntr) * _Iratio;
-		Unow = sqrt((float)_U2summ / _Ucntr) * _Uratio;  	// if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+		Unow = sqrt((float)_U2summ / _Ucntr) * _Uratio;  // if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
 		Pold = Pavg;
 		Pavg = Pnow;
 		Pnow = Inow * Unow;
 		Pavg = (Pnow + Pavg + Pold) / 3;
-				
+		
 		//if (abs(Pnow - Pset) < 10) _zero++;
-		// 	if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
+		//if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
 		
 		if (Pset > 0)
 		{	
 			Angle += Pnow - Pset;
 			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
-			//if abs(Angle - _angle) < 10) zero++;
-			
 		} else Angle = MAX_OFFSET;
 		_angle = Angle;
 	}
@@ -232,13 +220,11 @@ void ACpower::OpenTriac_int() //__attribute__((always_inline))
 	if (TCNT1 < MAX_OFFSET) sbi(PORTD, _pinTriac);
 	//PORTD |= (1 << TRIAC);  - установит "1" и откроет триак
 	//PORTD &= ~(1 << TRIAC); - установит "0" и закроет триак
-	//TCNT1 = 65535 - 2000;  // Импульс включения симистора 65536 -  1 - 4 мкс, 2 - 8 мкс, 3 - 12 мкс и тд
 }
 
 void ACpower::CloseTriac_int() //__attribute__((always_inline))
 {
 	cbi(PORTD, _pinTriac);
-	//TCNT1 = OCR1A + 1;	
 }
 
 #ifdef CALIBRATE_ZERO

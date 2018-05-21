@@ -36,12 +36,14 @@
 #define ACS_RATIO30 0.073242188	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 
 #define PMIN 50				// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
-#define WAVE_COUNT 8			// сколько полуволн (half-wave) собирать/считать ток и напряжение
+#define WAVE_COUNT 2  		// сколько полуволн (half-wave) собирать/считать ток и напряжение
 
 //#define CALIBRATE_ZERO  // выполнять процедуру калибровки ноля датчика тока
 #ifndef CALIBRATE_ZERO
 #define _zeroI 512
 #endif
+
+//#define SERIAL_INFO
 
 //#define U_RATIO 0.2857	// множитель напряжения - теперь он в public и задается при создании объекта
 							// при Uratio=1 подсчет напряжения идет как и раньше - АЦП выдает значение "прямо" в вольтах
@@ -58,15 +60,15 @@ public:
 	float Inow;   		// переменная расчета RMS тока
 	float Unow;   		// переменная расчета RMS напряжения
 
-	int Angle = MAX_OFFSET;
+	int Angle;
 	uint16_t Pavg;
 	uint16_t Pnow;
 	uint16_t Pset = 0;
 	uint16_t Pmax;
 
 	void init();
-	void init(byte ACS712type);
 	void init(float Iratio, float Uratio);
+	void init(float Iratio, float Uratio, bool SerialInfo);
 		
 	void control();
 	void setpower(uint16_t setP);
