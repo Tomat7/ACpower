@@ -166,11 +166,11 @@ void ACpower::setpower(uint16_t setPower)
 
 void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
-	TCNT1 = 0;  			
 	//PORTD &= ~(1 << TRIAC); // установит "0" на выводе D5 - триак закроется
 	//cbi(PORTD, TRIAC);
 	OCR1A = int(_angle);
 	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
+	TCNT1 = 0;
 	_zero++;
 	
 	if (_zero == (WAVE_COUNT + 1)) 
