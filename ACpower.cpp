@@ -194,7 +194,6 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 		_zero = 0;
 		_cntr = 0;
 	}
-	
 	return;
 }
 
