@@ -7,8 +7,8 @@
 
 #include "Arduino.h"
 #include "ACpower.h"
-
 // defines for setting and clearing register bits
+
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
@@ -16,55 +16,38 @@
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-/*
-	_summ2ADC
-		_summ2U
-		_IsummSQR
-		_UsummSQR
-		_ADCsummSQR
-		_I2summ
-		_sumUU
-		_sumII
-		_IsqrSumm
-		_sumIsqr
-		
-		_ADC2summ
-		_adc2summ
-		
-		_adcSumm
-		_Usumm
-		_SummSqrI
-		_summSqrU
-		_UsummSqr
-		_IsummSqr
-		
-		_countADC
-		_countU
-		_adcSummSqr
-		_summ2ADC
-*/
+//ACpower TEH;              // preinstatiate
 
 volatile bool ACpower::getI;
+volatile bool ACpower::takeADC;
+volatile byte ACpower::_zero;
+volatile byte ACpower::_admuxI;
+volatile byte ACpower::_admuxU;
 volatile unsigned int ACpower::_cntr;
+volatile unsigned int ACpower::_Icntr;
+volatile unsigned int ACpower::_Ucntr;
 volatile unsigned long ACpower::_Summ;
+volatile unsigned long ACpower::_I2summ;
+volatile unsigned long ACpower::_U2summ;
 volatile unsigned int ACpower::_angle;
-volatile static byte ACpower::_pinTriac;
+volatile byte ACpower::_pinTriac;
+
 #ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
 #endif
-
 //=== Обработка прерывания по совпадению OCR1A (угла открытия) и счетчика TCNT1 
-//=== устанавливается "1" на _pinTriac, а затем сбрасывается в "0" по CloseTriac_int() 
+// (который сбрасывается в "0" по zero_crosss_int) 
+
 ISR(TIMER1_COMPA_vect) {
 	ACpower::OpenTriac_int();
 }
 
-//=== Обработка прерывания по совпадению OCR1B необходима для "гашения" триака 
-ISR(TIMER1_COMPB_vect) {
+// ==== Обработка прерывания по переполнению таймера. необходима для "гашения" триака 
+ISR(TIMER1_COMPB_vect) { //timer1 overflow
 	ACpower::CloseTriac_int();
 }
 
-//=== Обработка прерывания АЦП для расчета среднеквадратичного тока
+//================= Обработка прерывания АЦП для расчета среднеквадратичного тока
 ISR(ADC_vect) {
 	ACpower::GetADC_int();
 }
@@ -92,22 +75,16 @@ void ACpower::init()
 	init(ACS_RATIO20, 1);
 }
 
-void ACpower::init(byte ACS712type)
+void ACpower::init(float Iratio, float Uratio)
 {
-	if 		(ACS712type == 5)	init(ACS_RATIO5, 1);
-	else if (ACS712type == 20)	init(ACS_RATIO20, 1);
-	else if	(ACS712type == 30)	init(ACS_RATIO30, 1);
-	else 
-	{
-		Serial.println(F("ERROR: ACS712 wrong type!"));
-		init(1, 1);
-	}
+	init(Iratio, Uratio, true);
 }
 
-void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
+void ACpower::init(float Iratio, float Uratio, bool SerialInfo)
 {  
 	_Iratio = Iratio;
-	_Uratio = Uratio;	// обычно Uratio = 1, но при этом диапазон АЦП Ардуино используется от 0 до 220 (до 310)
+	_Uratio = Uratio;	
+	// обычно Uratio = 1, но при этом диапазон АЦП Ардуино используется от 0 до 220 (до 310)
 	// после изменении схемы возможно использовать весь диапазон АЦП (до 1023) но требуется подбор Uratio
 	// и возможно перекалибровка если Uratio не удастся подобрать в пределах от 1 до 0.3 
 	
@@ -122,6 +99,10 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0); // начинаем с "начала"
 	_admuxI = ADMUX | _pinI;	// состояние ADMUX для измерения тока
 	_admuxU = ADMUX | _pinU;	// и напряжения
+	ADMUX = _admuxI;			// начинаем со сбора тока
+	getI = true;
+	takeADC = false;
+	//_Summ=0;
 	//Включение АЦП
 	ADCSRA = B11101111; 
 	ACSR = (1 << ACD);
@@ -131,121 +112,133 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	TCCR1B = 0x00;
 	TCCR1B = (0 << CS12) | (1 << CS11); // Тактирование от CLK. 20000 отсчетов 1 полупериод. (по таблице внизу)
 	_angle = MAX_OFFSET;
-	OCR1A = int(_angle);
-	OCR1B = int(MAX_OFFSET + 1000);					
+	OCR1A = int(_angle);				// для открытия триака
+	OCR1B = int(MAX_OFFSET + 1000);		// для закрытия триака за ~500 мкс до ZeroCross			
 	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
 	
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);	//вызов прерывания при детектировании нуля
 	
-	Serial.print(F(LIBVERSION));
-	Serial.print(_zeroI);
-	String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
-	Serial.println(ACinfo);
-	ADMUX = _admuxI;			// начинаем со сбора тока
-	getI = true;	
-	_Summ=0;		
-}
-
-void ACpower::control()
-{	
-	if (_cntr == 1024)
-	{	
-		_Summ >>= 10;
-		if (getI)
-		{	
-			ADMUX = _admuxU;	// ток уже собрали, теперь начинаем собирать НАПРЯЖЕНИЕ
-			Inow = (_Summ > 2) ? sqrt(_Summ) * _Iratio : 0;
-			getI = false;
-		}
-		else
-		{	
-			ADMUX = _admuxI;	// начинаем собирать ТОК 
-			Unow = (_Summ > 50) ? sqrt(_Summ) * _Uratio : 0;
-			getI = true;
-		}
-		
-		uint16_t Pold;
-		Pold = Pavg;
-		Pavg = Pnow;
-		Pnow = Inow * Unow;
-		Pavg = (Pold + Pnow + Pavg) / 3;	// назовём это средней мощностью
-		
-		if (Pset > 0)	
-		{			
-			Angle += Pnow - Pset;
-			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
-		} else Angle = MAX_OFFSET;
-		
-		_angle = Angle;
-		_ADCmillis = millis();		// DEBUG!!
-		_Summ = 0;
-		//cli();			// так в умных интернетах пишут, возможно это лишнее - ** и без этого работает **
-		_cntr = 1025;		// в счетчик установим "кодовое значение", а ZeroCross это проверим
-		//sei();
+	if (SerialInfo)
+	{
+		Serial.print(F(LIBVERSION));
+		Serial.print(_zeroI);
+		String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
+		Serial.println(ACinfo);
 	}
 	return;
 }
 
+void ACpower::control()
+{	
+	if (_zero == 0)
+	{
+		uint16_t Pold;
+		_zero++;
+		Inow = sqrt(_I2summ / _Icntr) * _Iratio;
+		Unow = sqrt(_U2summ / _Ucntr) * _Uratio;  // if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+		Pold = Pavg;
+		Pavg = Pnow;
+		Pnow = Inow * Unow;
+		Pavg = (Pnow + Pavg + Pold) / 3;
+		
+		//if (abs(Pnow - Pset) < 10) _zero++;
+		//if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
+		
+		if (Pset > 0)
+		{	
+			Angle += Pnow - Pset;
+			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
+		} else Angle = MAX_OFFSET;
+		_angle = Angle;
+	}
+	return;
+}
+
+
 void ACpower::setpower(uint16_t setPower)
 {	
 	if (setPower > Pmax) Pset = Pmax;
-	else if (setPower < PMIN) Pset = 0;		// меньше 50вт установить не получится
+	else if (setPower < PMIN) Pset = 0;
 	else Pset = setPower;
 	return;
 }
 
-void ACpower::ZeroCross_int()
+void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
-	TCNT1 = 0;  			
-	//cbi(PORTD, _pinTriac);			// PORTD &= ~(1 << TRIAC); установит "0" на выводе D5 - триак закроется
-	OCR1A = int(_angle);				// задаём угол открытия симистора
-	//OCR1B = int(_angle + 1000);			// и угол закрытия симистора - при установленных параметрах таймера 1000 = 0.5 милисек
-	if (_cntr == 1025) _cntr = 1050;	// в счетчик установим "кодовое значение", а в GetADC это проверим
+	//PORTD &= ~(1 << TRIAC); // установит "0" на выводе D5 - триак закроется
+	//cbi(PORTD, TRIAC);
+	OCR1A = int(_angle);
+	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
+	TCNT1 = 0;
+	_zero++;
+	
+	if (_zero == (WAVE_COUNT + 1)) 
+	{ 
+		takeADC = false;
+		if (getI) 
+		{
+			ADMUX = _admuxU;	// ток уже собрали, теперь начинаем собирать НАПРЯЖЕНИЕ
+			getI = false;
+			_I2summ = _Summ;
+			_Icntr = _cntr;
+		}
+		else
+		{
+			ADMUX = _admuxI;	// начинаем собирать ТОК 
+			getI = true;
+			_U2summ = _Summ;
+			_Ucntr = _cntr;
+		}
+		_Summ = 0;
+		_zero = 0;
+		_cntr = 0;
+	}
+	return;
 }
 
-void ACpower::GetADC_int()
+void ACpower::GetADC_int() //__attribute__((always_inline))
 {
-	unsigned long adcData = 0;			//мгновенные значения тока
+	unsigned long adcData = 0; //мгновенные значения тока
 	byte An_pin = ADCL;
 	byte An = ADCH;
-	if (_cntr < 1024)
+	if (takeADC)
 	{
 		adcData = ((An << 8) + An_pin);
 		if (getI) adcData -= _zeroI;
 		adcData *= adcData;                 // возводим значение в квадрат
 		_Summ += adcData;                   // складываем квадраты измерений
 		_cntr++;
-		return;
 	}
-	if (_cntr == 1050) _cntr = 0;
+	else if (_cntr == 0) takeADC = true;
 	return;
 }
 
-void ACpower::OpenTriac_int()
+void ACpower::OpenTriac_int() //__attribute__((always_inline))
 {
 	if (TCNT1 < MAX_OFFSET) sbi(PORTD, _pinTriac);
 	//PORTD |= (1 << TRIAC);  - установит "1" и откроет триак
 	//PORTD &= ~(1 << TRIAC); - установит "0" и закроет триак
 }
 
-void ACpower::CloseTriac_int()
+void ACpower::CloseTriac_int() //__attribute__((always_inline))
 {
 	cbi(PORTD, _pinTriac);
 }
 
 #ifdef CALIBRATE_ZERO
-	int ACpower::calibrate() 
-	{
-		int zero = 0;
-		for (int i = 0; i < 10; i++) {
-			delay(10);
-			zero += analogRead();
-		}
-		zero /= 10;
-		return zero;
+int ACpower::calibrate() 
+{
+	int zero = 0;
+	for (int i = 0; i < 10; i++) {
+		delay(10);
+		zero += analogRead(A1);
 	}
+	zero /= 10;
+	return zero;
+}
 #endif
+
 /*
 	//===========================================================Настройка АЦП
 	
@@ -322,4 +315,4 @@ void ACpower::CloseTriac_int()
 	// где N - коэф. предделителя (1, 8, 64, 256 или 1024)
 	
 	TIMSK1 |= (1 << OCIE1A) | (1 << TOIE1); // Разрешить прерывание по совпадению и переполнению
-*/
+	*/
