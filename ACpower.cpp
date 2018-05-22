@@ -29,8 +29,15 @@ volatile unsigned int ACpower::_Ucntr;
 volatile unsigned long ACpower::_Summ;
 volatile unsigned long ACpower::_I2summ;
 volatile unsigned long ACpower::_U2summ;
-volatile unsigned int ACpower::_angle;
+volatile unsigned int ACpower::Angle;
 volatile byte ACpower::_pinTriac;
+
+volatile float ACpower::Inow;
+volatile float ACpower::Unow;
+volatile static float ACpower::_Uratio;
+volatile static float ACpower::_Iratio;
+volatile static uint16_t ACpower::Pnow;
+volatile static uint16_t ACpower::Pset;
 
 #ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
@@ -111,8 +118,8 @@ void ACpower::init(float Iratio, float Uratio, bool SerialInfo)
 	TCCR1A = 0x00;
 	TCCR1B = 0x00;
 	TCCR1B = (0 << CS12) | (1 << CS11); // Тактирование от CLK. 20000 отсчетов 1 полупериод. (по таблице внизу)
-	_angle = MAX_OFFSET;
-	OCR1A = int(_angle);				// для открытия триака
+	Angle = MAX_OFFSET;
+	OCR1A = int(Angle);				// для открытия триака
 	OCR1B = int(MAX_OFFSET + 1000);		// для закрытия триака за ~500 мкс до ZeroCross			
 	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
@@ -129,33 +136,6 @@ void ACpower::init(float Iratio, float Uratio, bool SerialInfo)
 	return;
 }
 
-void ACpower::control()
-{	
-	if (_zero == 0)
-	{
-		uint16_t Pold;
-		_zero++;
-		Inow = sqrt(_I2summ / _Icntr) * _Iratio;
-		Unow = sqrt(_U2summ / _Ucntr) * _Uratio;  // if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
-		Pold = Pavg;
-		Pavg = Pnow;
-		Pnow = Inow * Unow;
-		Pavg = (Pnow + Pavg + Pold) / 3;
-		
-		//if (abs(Pnow - Pset) < 10) _zero++;
-		//if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
-		
-		if (Pset > 0)
-		{	
-			Angle += Pnow - Pset;
-			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
-		} else Angle = MAX_OFFSET;
-		_angle = Angle;
-	}
-	return;
-}
-
-
 void ACpower::setpower(uint16_t setPower)
 {	
 	if (setPower > Pmax) Pset = Pmax;
@@ -166,12 +146,10 @@ void ACpower::setpower(uint16_t setPower)
 
 void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
-	
 	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
-	
 	_zero++;
 	
-	if (_zero == (WAVE_COUNT)) 
+	if (_zero == WAVE_COUNT) 
 	{ 
 		takeADC = false;
 		if (getI) 
@@ -186,9 +164,6 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			getI = true;
 			Unow = sqrt(_Summ / _cntr) * _Uratio;
 		}
-		_cntr = 0;
-		_Summ = 0;
-		_zero = 0;
 		
 		Pnow = Inow * Unow;
 		if (Pset > 0)
@@ -196,10 +171,13 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			Angle += Pnow - Pset;
 			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
 		} else Angle = MAX_OFFSET;
-		_angle = Angle;
+		//_angle = Angle;
 		
-		OCR1A = int(_angle);
+		OCR1A = int(Angle);
 		TCNT1 = 0;
+		_cntr = 0;
+		_Summ = 0;
+		_zero = 0;
 	}
 	return;
 }

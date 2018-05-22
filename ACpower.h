@@ -28,7 +28,7 @@
 
 #include "Arduino.h"
 
-#define LIBVERSION "ACpower_v20180520 zeroI: "
+#define LIBVERSION "ACpower_v20180523 zeroI: "
 #define ZERO_OFFSET 100			// минимальный угол открытия. *** возможно нужно больше!! ***
 #define MAX_OFFSET 18000    	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
 #define ACS_RATIO5 0.024414063	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
@@ -55,20 +55,20 @@ public:
 	ACpower(uint16_t Pm);
 	ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712);
 	
-	float Inow;   		// переменная расчета RMS тока
-	float Unow;   		// переменная расчета RMS напряжения
+	volatile static float Inow;   		// переменная расчета RMS тока
+	volatile static float Unow;   		// переменная расчета RMS напряжения
 
-	int Angle;
+	volatile static unsigned int Angle;
 	uint16_t Pavg;
-	uint16_t Pnow;
-	uint16_t Pset = 0;
+	volatile static uint16_t Pnow;
+	volatile static uint16_t Pset;
 	uint16_t Pmax;
 
 	void init();
 	void init(float Iratio, float Uratio);
 	void init(float Iratio, float Uratio, bool SerialInfo);
 		
-	void control();
+	//void control();
 	void setpower(uint16_t setP);
 	//=== Прерывания
 	static void ZeroCross_int() __attribute__((always_inline));
@@ -82,8 +82,8 @@ public:
 	
 protected:
 	
-	float _Uratio;
-	float _Iratio;
+	volatile static float _Uratio;
+	volatile static float _Iratio;
 
 	volatile static bool getI;
 	volatile static bool takeADC;
@@ -97,7 +97,7 @@ protected:
 	volatile static unsigned long _Summ;
 	volatile static unsigned long ACpower::_I2summ;
 	volatile static unsigned long ACpower::_U2summ;
-	volatile static unsigned int _angle;
+	//volatile static unsigned int _angle;
 	
 	volatile static byte _pinTriac;
 	byte _pinZCross;
