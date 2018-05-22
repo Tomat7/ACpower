@@ -10,7 +10,6 @@ setpower	KEYWORD2
 getpower    KEYWORD2
 Pnow		KEYWORD2
 Pset		KEYWORD2
-Pavg		KEYWORD2
 Inow		KEYWORD2
 Iset		KEYWORD2
 Uset		KEYWORD2
