@@ -151,7 +151,6 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 	
 	if (_zero == WAVE_COUNT) 
 	{ 
-		takeADC = false;
 		if (getI) 
 		{
 			ADMUX = _admuxU;	// ток уже собрали, теперь начинаем собирать НАПРЯЖЕНИЕ
@@ -171,8 +170,8 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			Angle += Pnow - Pset;
 			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
 		} else Angle = MAX_OFFSET;
-		//_angle = Angle;
 		
+		takeADC = false;
 		OCR1A = int(Angle);
 		TCNT1 = 0;
 		_cntr = 0;
