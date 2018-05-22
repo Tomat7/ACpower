@@ -166,33 +166,40 @@ void ACpower::setpower(uint16_t setPower)
 
 void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
-	//PORTD &= ~(1 << TRIAC); // установит "0" на выводе D5 - триак закроется
-	//cbi(PORTD, TRIAC);
-	OCR1A = int(_angle);
+	
 	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
-	TCNT1 = 0;
+	
 	_zero++;
 	
-	if (_zero == (WAVE_COUNT + 1)) 
+	if (_zero == (WAVE_COUNT)) 
 	{ 
 		takeADC = false;
 		if (getI) 
 		{
 			ADMUX = _admuxU;	// ток уже собрали, теперь начинаем собирать НАПРЯЖЕНИЕ
 			getI = false;
-			_I2summ = _Summ;
-			_Icntr = _cntr;
+			Inow = sqrt(_Summ / _cntr) * _Iratio;
 		}
 		else
 		{
 			ADMUX = _admuxI;	// начинаем собирать ТОК 
 			getI = true;
-			_U2summ = _Summ;
-			_Ucntr = _cntr;
+			Unow = sqrt(_Summ / _cntr) * _Uratio;
 		}
+		_cntr = 0;
 		_Summ = 0;
 		_zero = 0;
-		_cntr = 0;
+		
+		Pnow = Inow * Unow;
+		if (Pset > 0)
+		{	
+			Angle += Pnow - Pset;
+			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
+		} else Angle = MAX_OFFSET;
+		_angle = Angle;
+		
+		OCR1A = int(_angle);
+		TCNT1 = 0;
 	}
 	return;
 }
