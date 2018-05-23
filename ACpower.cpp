@@ -125,7 +125,7 @@ void ACpower::init(float Iratio, float Uratio, bool SerialInfo)
 	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
 	
-	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);	//вызов прерывания при детектировании нуля
+	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, FALLING);	//вызов прерывания при детектировании нуля
 	
 	if (SerialInfo)
 	{
@@ -147,12 +147,13 @@ void ACpower::setpower(uint16_t setPower)
 
 void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
-	usZeroCross = micros();
 	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
+	TCNT1 = 0;
 	_zero++;
 	
 	if (_zero == WAVE_COUNT) 
 	{ 
+		//usZeroCross = micros();
 		if (getI) 
 		{
 			ADMUX = _admuxU;	// ток уже собрали, теперь начинаем собирать НАПРЯЖЕНИЕ
@@ -165,7 +166,7 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			getI = true;
 			Unow = sqrt(_Summ / _cntr) * _Uratio;
 		}
-		cbi(ADCSRA, ADIF);		// очищаем флаг прерывания от АЦП чтобы быть уверенными что следующий расчет будет новым ADMUX
+		//cbi(ADCSRA, ADIF);		// очищаем флаг прерывания от АЦП чтобы быть уверенными что следующий расчет будет новым ADMUX
 		
 		Pnow = Inow * Unow;
 		if (Pset > 0)
@@ -176,11 +177,10 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 		
 		takeADC = false;
 		OCR1A = int(Angle);
-		TCNT1 = 0;
 		_cntr = 0;
 		_Summ = 0;
 		_zero = 0;
-		usZeroCross = micros() - usZeroCross;
+		//usZeroCross = micros() - usZeroCross;
 	}
 	return;
 }
