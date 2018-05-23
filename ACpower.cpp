@@ -178,7 +178,7 @@ void ACpower::GetADC_int() //__attribute__((always_inline))
 		else ADMUX = _admuxI;	// начинаем собирать ТОК
 		getI = !getI;
 	}
-	else
+	else if (_cntr > 1)
 	{
 	unsigned long adcData = 0; //мгновенные значения тока
 	byte An_pin = ADCL;
