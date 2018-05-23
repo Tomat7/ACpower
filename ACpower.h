@@ -87,18 +87,13 @@ protected:
 	volatile static float _Iratio;
 
 	volatile static bool getI;
-	volatile static bool takeADC;
+	//volatile static bool takeADC;
 	volatile static byte _admuxI;
 	volatile static byte _admuxU;
 	volatile static byte _zero;
 	
 	volatile static unsigned int _cntr;
-	//volatile static unsigned int _Icntr;
-	//volatile static unsigned int _Ucntr;
 	volatile static unsigned long _Summ;
-	//volatile static unsigned long ACpower::_I2summ;
-	//volatile static unsigned long ACpower::_U2summ;
-	//volatile static unsigned int _angle;
 	
 	volatile static byte _pinTriac;
 	byte _pinZCross;

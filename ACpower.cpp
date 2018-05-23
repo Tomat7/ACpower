@@ -19,17 +19,12 @@
 //ACpower TEH;              // preinstatiate
 
 volatile bool ACpower::getI;
-volatile bool ACpower::takeADC;
 volatile byte ACpower::_zero;
 volatile byte ACpower::_admuxI;
 volatile byte ACpower::_admuxU;
 volatile byte ACpower::_pinTriac;
 volatile unsigned int ACpower::_cntr;
-//volatile unsigned int ACpower::_Icntr;
-//volatile unsigned int ACpower::_Ucntr;
 volatile unsigned long ACpower::_Summ;
-//volatile unsigned long ACpower::_I2summ;
-//volatile unsigned long ACpower::_U2summ;
 volatile unsigned int ACpower::Angle;
 
 volatile float ACpower::Inow;
@@ -109,8 +104,9 @@ void ACpower::init(float Iratio, float Uratio, bool SerialInfo)
 	_admuxU = ADMUX | _pinU;	// и напряжения
 	ADMUX = _admuxI;			// начинаем со сбора тока
 	getI = true;
-	takeADC = false;
 	//_Summ=0;
+	//_cntr=0;
+	//_zero=0;
 	//Включение АЦП
 	ADCSRA = B11101111; 
 	ACSR = (1 << ACD);
@@ -153,19 +149,9 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 	
 	if (_zero == WAVE_COUNT) 
 	{ 
-		if (getI) 
-		{
-			ADMUX = _admuxU;	// ток уже собрали, теперь начинаем собирать НАПРЯЖЕНИЕ
-			getI = false;
-			Inow = sqrt(_Summ / _cntr) * _Iratio;
-		}
-		else
-		{
-			ADMUX = _admuxI;	// начинаем собирать ТОК 
-			getI = true;
-			Unow = sqrt(_Summ / _cntr) * _Uratio;
-		}
-		cbi(ADCSRA, ADIF);		// очищаем флаг прерывания от АЦП чтобы быть уверенными что следующий расчет будет новым ADMUX
+		if (getI) Inow = sqrt(_Summ / _cntr) * _Iratio;
+		else Unow = sqrt(_Summ / _cntr) * _Uratio;
+		// cbi(ADCSRA, ADIF);		// очищаем флаг прерывания от АЦП чтобы быть уверенными что следующий расчет будет новым ADMUX
 		
 		Pnow = Inow * Unow;
 		if (Pset > 0)
@@ -174,11 +160,10 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
 		} else Angle = MAX_OFFSET;
 		
-		takeADC = false;
 		OCR1A = int(Angle);
 		TCNT1 = 0;
-		_cntr = 0;
 		_Summ = 0;
+		_cntr = 0;
 		_zero = 0;
 		usZeroCross = micros() - usZeroCross;
 	}
@@ -187,18 +172,23 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 
 void ACpower::GetADC_int() //__attribute__((always_inline))
 {
+	if (_cntr == 0) 
+	{
+		if (getI) ADMUX = _admuxU;	// ток уже собрали, теперь начинаем собирать НАПРЯЖЕНИЕ
+		else ADMUX = _admuxI;	// начинаем собирать ТОК
+		getI = !getI;
+	}
+	else
+	{
 	unsigned long adcData = 0; //мгновенные значения тока
 	byte An_pin = ADCL;
 	byte An = ADCH;
-	if (takeADC)
-	{
-		adcData = ((An << 8) + An_pin);
-		if (getI) adcData -= _zeroI;
-		adcData *= adcData;                 // возводим значение в квадрат
-		_Summ += adcData;                   // складываем квадраты измерений
-		_cntr++;
+	adcData = ((An << 8) + An_pin);
+	if (getI) adcData -= _zeroI;
+	adcData *= adcData;                 // возводим значение в квадрат
+	_Summ += adcData;                   // складываем квадраты измерений
 	}
-	else if (_cntr == 0) takeADC = true;	// первых "заход" пропускаем, потому что ADMUX мог быть поменян во время подсчета
+	_cntr++;
 	return;
 }
 
