@@ -23,14 +23,14 @@ volatile bool ACpower::takeADC;
 volatile byte ACpower::_zero;
 volatile byte ACpower::_admuxI;
 volatile byte ACpower::_admuxU;
-volatile unsigned int ACpower::_cntr;
-volatile unsigned int ACpower::_Icntr;
-volatile unsigned int ACpower::_Ucntr;
-volatile unsigned long ACpower::_Summ;
-volatile unsigned long ACpower::_I2summ;
-volatile unsigned long ACpower::_U2summ;
-volatile unsigned int ACpower::Angle;
 volatile byte ACpower::_pinTriac;
+volatile unsigned int ACpower::_cntr;
+//volatile unsigned int ACpower::_Icntr;
+//volatile unsigned int ACpower::_Ucntr;
+volatile unsigned long ACpower::_Summ;
+//volatile unsigned long ACpower::_I2summ;
+//volatile unsigned long ACpower::_U2summ;
+volatile unsigned int ACpower::Angle;
 
 volatile float ACpower::Inow;
 volatile float ACpower::Unow;
@@ -38,6 +38,7 @@ volatile static float ACpower::_Uratio;
 volatile static float ACpower::_Iratio;
 volatile static uint16_t ACpower::Pnow;
 volatile static uint16_t ACpower::Pset;
+volatile static uint16_t ACpower::usZeroCross;
 
 #ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
@@ -146,6 +147,7 @@ void ACpower::setpower(uint16_t setPower)
 
 void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
+	usZeroCross = micros();
 	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
 	_zero++;
 	
@@ -163,6 +165,7 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			getI = true;
 			Unow = sqrt(_Summ / _cntr) * _Uratio;
 		}
+		cbi(ADCSRA, ADIF);		// очищаем флаг прерывания от АЦП чтобы быть уверенными что следующий расчет будет новым ADMUX
 		
 		Pnow = Inow * Unow;
 		if (Pset > 0)
@@ -177,6 +180,7 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 		_cntr = 0;
 		_Summ = 0;
 		_zero = 0;
+		usZeroCross = micros() - usZeroCross;
 	}
 	return;
 }
@@ -194,7 +198,7 @@ void ACpower::GetADC_int() //__attribute__((always_inline))
 		_Summ += adcData;                   // складываем квадраты измерений
 		_cntr++;
 	}
-	else if (_cntr == 0) takeADC = true;
+	else if (_cntr == 0) takeADC = true;	// первых "заход" пропускаем, потому что ADMUX мог быть поменян во время подсчета
 	return;
 }
 

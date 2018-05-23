@@ -59,9 +59,10 @@ public:
 	volatile static float Unow;   		// переменная расчета RMS напряжения
 
 	volatile static unsigned int Angle;
-	uint16_t Pavg;
 	volatile static uint16_t Pnow;
 	volatile static uint16_t Pset;
+	volatile static uint16_t usZeroCross;
+	uint16_t Pavg;
 	uint16_t Pmax;
 
 	void init();
@@ -92,11 +93,11 @@ protected:
 	volatile static byte _zero;
 	
 	volatile static unsigned int _cntr;
-	volatile static unsigned int _Icntr;
-	volatile static unsigned int _Ucntr;
+	//volatile static unsigned int _Icntr;
+	//volatile static unsigned int _Ucntr;
 	volatile static unsigned long _Summ;
-	volatile static unsigned long ACpower::_I2summ;
-	volatile static unsigned long ACpower::_U2summ;
+	//volatile static unsigned long ACpower::_I2summ;
+	//volatile static unsigned long ACpower::_U2summ;
 	//volatile static unsigned int _angle;
 	
 	volatile static byte _pinTriac;
