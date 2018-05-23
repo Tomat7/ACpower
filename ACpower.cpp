@@ -143,12 +143,12 @@ void ACpower::setpower(uint16_t setPower)
 
 void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
-	usZeroCross = micros();
 	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
 	_zero++;
 	
 	if (_zero == WAVE_COUNT) 
 	{ 
+		usZeroCross = micros();
 		if (getI) Inow = sqrt(_Summ / _cntr) * _Iratio;
 		else Unow = sqrt(_Summ / _cntr) * _Uratio;
 		// cbi(ADCSRA, ADIF);		// очищаем флаг прерывания от АЦП чтобы быть уверенными что следующий расчет будет новым ADMUX
