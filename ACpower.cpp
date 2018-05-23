@@ -121,7 +121,7 @@ void ACpower::init(float Iratio, float Uratio, bool SerialInfo)
 	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
 	
-	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);	//вызов прерывания при детектировании нуля
+	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, FALLING);	//вызов прерывания при детектировании нуля
 	
 	if (SerialInfo)
 	{
@@ -161,12 +161,12 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 		} else Angle = MAX_OFFSET;
 		
 		OCR1A = int(Angle);
-		TCNT1 = 0;
 		_Summ = 0;
 		_cntr = 0;
 		_zero = 0;
 		usZeroCross = micros() - usZeroCross;
 	}
+	TCNT1 = 0;
 	return;
 }
 
@@ -174,9 +174,16 @@ void ACpower::GetADC_int() //__attribute__((always_inline))
 {
 	if (_cntr == 0) 
 	{
-		if (getI) ADMUX = _admuxU;	// ток уже собрали, теперь начинаем собирать НАПРЯЖЕНИЕ
-		else ADMUX = _admuxI;	// начинаем собирать ТОК
-		getI = !getI;
+		if (getI)
+		{
+			ADMUX = _admuxU;	// ток уже собрали, теперь начинаем собирать НАПРЯЖЕНИЕ
+			getI = false;
+		}
+		else
+		{
+			ADMUX = _admuxI;	// начинаем собирать ТОК
+			getI = true;
+		}
 	}
 	else if (_cntr > 1)
 	{
