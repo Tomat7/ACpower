@@ -113,7 +113,7 @@ void ACpower::init(float Iratio, float Uratio, bool SerialInfo)
 	TCCR1B = (0 << CS12) | (1 << CS11); // Тактирование от CLK. 20000 отсчетов 1 полупериод. (по таблице внизу)
 	_angle = MAX_OFFSET;
 	OCR1A = int(_angle);				// для открытия триака
-	OCR1B = int(MAX_OFFSET + 1000);		// для закрытия триака за ~500 мкс до ZeroCross			
+	OCR1B = int(MAX_OFFSET + 500);		// для закрытия триака за ~250 мкс до ZeroCross			
 	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
 	
