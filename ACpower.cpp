@@ -133,15 +133,17 @@ void ACpower::control()
 {	
 	if (_zero == 0)
 	{
-		uint16_t Pold;
+		//uint16_t Pold;
 		_zero++;
-		if (getI) Unow = sqrt(_U2summ / _Ucntr) * _Uratio;  // if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
-		else Inow = sqrt(_I2summ / _Icntr) * _Iratio;
+		Unow = sqrt(_U2summ / _Ucntr) * _Uratio;  // if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+		Inow = sqrt(_I2summ / _Icntr) * _Iratio;
 		
-		Pold = Pavg;
+		//Pold = Pavg;
+		//Pavg = Pnow;
 		Pavg = Pnow;
 		Pnow = Inow * Unow;
-		Pavg = (Pnow + Pavg + Pold) / 3;
+		//Pavg = (Pnow + Pavg + Pold) / 3;
+		Pavg = (Pnow + Pavg) / 2;
 		
 		//if (abs(Pnow - Pset) < 10) _zero++;
 		//if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
