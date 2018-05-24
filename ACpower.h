@@ -59,7 +59,7 @@ public:
 	float Unow;   		// переменная расчета RMS напряжения
 
 	int Angle;
-	uint16_t Pavg;
+	//uint16_t Pavg;
 	uint16_t Pnow;
 	uint16_t Pset = 0;
 	uint16_t Pmax;

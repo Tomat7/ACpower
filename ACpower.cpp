@@ -140,10 +140,10 @@ void ACpower::control()
 		
 		//Pold = Pavg;
 		//Pavg = Pnow;
-		Pavg = Pnow;
+		//Pavg = Pnow;
 		Pnow = Inow * Unow;
 		//Pavg = (Pnow + Pavg + Pold) / 3;
-		Pavg = (Pnow + Pavg) / 2;
+		//Pavg = (Pnow + Pavg) / 2;
 		
 		//if (abs(Pnow - Pset) < 10) _zero++;
 		//if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
