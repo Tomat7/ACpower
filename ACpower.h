@@ -56,17 +56,17 @@ public:
 	ACpower(uint16_t Pm);
 	ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712);
 
-	float Inow = 0;   		// переменная расчета RMS тока
-	float Unow = 0;   		// переменная расчета RMS напряжения
+	float Inow;   		// переменная расчета RMS тока
+	float Unow;   		// переменная расчета RMS напряжения
 
-	int Angle = MAX_OFFSET;
+	int Angle;
 	uint16_t Pnow;
-	uint16_t Pavg;			// грубо говоря, это средняя мощность за 3 измерения
-	uint16_t Pset = 0;
+	//uint16_t Pavg;			// грубо говоря, это средняя мощность за 3 измерения
+	uint16_t Pset;
 	uint16_t Pmax;
 
 	void init();
-	void init(byte ACS712type);
+	//void init(byte ACS712type);
 	void init(float Iratio, float Uratio);
 	
 	void control();

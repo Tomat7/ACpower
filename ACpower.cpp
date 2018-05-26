@@ -64,6 +64,7 @@ void ACpower::init()
 	init(ACS_RATIO20, 1);
 }
 
+/*
 void ACpower::init(byte ACS712type)
 {
 	if 		(ACS712type == 5)	init(ACS_RATIO5, 1);
@@ -75,6 +76,7 @@ void ACpower::init(byte ACS712type)
 		init(1, 1);
 	}
 }
+*/
 
 void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 {  
@@ -102,7 +104,8 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	TCCR1A = 0x00;
 	TCCR1B = 0x00;
 	TCCR1B = (0 << CS12) | (1 << CS11); // Тактирование от CLK. 20000 отсчетов 1 полупериод. (по таблице внизу)
-	OCR1A = 0;					
+	OCR1A = MAX_OFFSET;
+	OCR1B = MAX_OFFSET + 1000;			// и угол закрытия симистора - при установленных параметрах таймера 500 = 0.25 милисек
 	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);	//вызов прерывания при детектировании нуля
@@ -134,11 +137,11 @@ void ACpower::control()
 			getI = true;
 		}
 		
-		uint16_t Pold;
-		Pold = Pavg;
-		Pavg = Pnow;
+		//uint16_t Pold;
+		//Pold = Pavg;
+		//Pavg = Pnow;
 		Pnow = Inow * Unow;
-		Pavg = (Pold + Pnow + Pavg) / 3;	// назовём это средней мощностью
+		//Pavg = (Pold + Pnow + Pavg) / 3;	// назовём это средней мощностью
 		
 		if (Pset > 0)	
 		{			
@@ -169,7 +172,7 @@ void ACpower::ZeroCross_int()
 	TCNT1 = 0;  			
 	//cbi(PORTD, _pinTriac);			// PORTD &= ~(1 << TRIAC); установит "0" на выводе D5 - триак закроется
 	OCR1A = int(_angle);				// задаём угол открытия симистора
-	OCR1B = int(_angle + 1000);			// и угол закрытия симистора - при установленных параметрах таймера 1000 = 0.5 милисек
+	//OCR1B = int(_angle + 1000);			// и угол закрытия симистора - при установленных параметрах таймера 1000 = 0.5 милисек
 	if (_cntr == 1025) _cntr = 1050;	// в счетчик установим "кодовое значение", а в GetADC это проверим
 }
 
