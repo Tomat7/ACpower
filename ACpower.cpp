@@ -138,15 +138,7 @@ void ACpower::control()
 		Unow = sqrt(_U2summ / _Ucntr) * _Uratio;  // if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
 		Inow = sqrt(_I2summ / _Icntr) * _Iratio;
 		
-		//Pold = Pavg;
-		//Pavg = Pnow;
-		//Pavg = Pnow;
 		Pnow = Inow * Unow;
-		//Pavg = (Pnow + Pavg + Pold) / 3;
-		//Pavg = (Pnow + Pavg) / 2;
-		
-		//if (abs(Pnow - Pset) < 10) _zero++;
-		//if (((Pset > 0) && (Pnow != Pavg)) || ((_zero == 0) && (Pavg != Pold)))
 		
 		if (Pset > 0)
 		{	
@@ -154,7 +146,7 @@ void ACpower::control()
 			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
 		} else Angle = MAX_OFFSET;
 		_angle = Angle;
-		OCR1A = int(_angle);
+		//OCR1A = int(_angle);
 	}
 	return;
 }
@@ -172,9 +164,9 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
 	//PORTD &= ~(1 << TRIAC); // установит "0" на выводе D5 - триак закроется
 	//cbi(PORTD, TRIAC);
-	//OCR1A = int(_angle);
-	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
 	TCNT1 = 0;
+	OCR1A = int(_angle);
+	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
 	_zero++;
 	
 	if (_zero == (WAVE_COUNT + 1)) 
