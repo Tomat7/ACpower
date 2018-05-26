@@ -149,10 +149,10 @@ void ACpower::control()
 			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
 		} else Angle = MAX_OFFSET;
 		
-		_angle = Angle;
-		_ADCmillis = millis();		// DEBUG!!
-		_Summ = 0;
 		//cli();			// так в умных интернетах пишут, возможно это лишнее - ** и без этого работает **
+		_angle = Angle;
+		//_ADCmillis = millis();		// DEBUG!!
+		_Summ = 0;
 		_cntr = 1025;		// в счетчик установим "кодовое значение", а ZeroCross это проверим
 		//sei();
 	}

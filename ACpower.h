@@ -88,7 +88,7 @@ protected:
 	volatile static unsigned int _cntr;
 	volatile static unsigned long _Summ;
 	volatile static unsigned int _angle;
-	unsigned long _ADCmillis;
+	//unsigned long _ADCmillis;
 	volatile static byte _pinTriac;
 	byte _pinZCross;
 	byte _pinI;
