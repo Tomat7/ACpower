@@ -25,15 +25,16 @@ volatile byte ACpower::_admuxU;
 volatile byte ACpower::_pinTriac;
 volatile unsigned int ACpower::_cntr;
 volatile unsigned long ACpower::_Summ;
-volatile unsigned int ACpower::Angle;
+volatile unsigned int ACpower::_angle;
+volatile int ACpower::Angle;
 
 volatile float ACpower::Inow;
 volatile float ACpower::Unow;
-volatile static float ACpower::_Uratio;
-volatile static float ACpower::_Iratio;
-volatile static uint16_t ACpower::Pnow;
-volatile static uint16_t ACpower::Pset;
-volatile static uint16_t ACpower::usZeroCross;
+volatile float ACpower::_Uratio;
+volatile float ACpower::_Iratio;
+volatile uint16_t ACpower::Pnow;
+volatile uint16_t ACpower::Pset;
+volatile uint16_t ACpower::usZeroCross;
 
 #ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
@@ -115,8 +116,8 @@ void ACpower::init(float Iratio, float Uratio, bool SerialInfo)
 	TCCR1A = 0x00;
 	TCCR1B = 0x00;
 	TCCR1B = (0 << CS12) | (1 << CS11); // Тактирование от CLK. 20000 отсчетов 1 полупериод. (по таблице внизу)
-	Angle = MAX_OFFSET;
-	OCR1A = int(Angle);				// для открытия триака
+	_angle = MAX_OFFSET;
+	OCR1A = int(_angle);				// для открытия триака
 	OCR1B = int(MAX_OFFSET + 500);		// для закрытия триака за ~250 мкс до ZeroCross			
 	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
@@ -150,8 +151,8 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 	if (_zero == WAVE_COUNT) 
 	{ 
 		usZeroCross = micros();
-		if (getI) Inow = sqrt(_Summ / _cntr) * _Iratio;
-		else Unow = sqrt(_Summ / _cntr) * _Uratio;
+		if (getI) Inow = sqrt(_Summ / (_cntr-2)) * _Iratio;
+		else Unow = sqrt(_Summ / (_cntr-2)) * _Uratio;
 		// cbi(ADCSRA, ADIF);		// очищаем флаг прерывания от АЦП чтобы быть уверенными что следующий расчет будет новым ADMUX
 		
 		Pnow = Inow * Unow;
@@ -160,8 +161,8 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			Angle += Pnow - Pset;
 			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
 		} else Angle = MAX_OFFSET;
-		
-		OCR1A = int(Angle);
+		_angle = Angle;
+		OCR1A = int(_angle);
 		_Summ = 0;
 		_cntr = 0;
 		_zero = 0;
@@ -186,7 +187,7 @@ void ACpower::GetADC_int() //__attribute__((always_inline))
 			getI = true;
 		}
 	}
-	else //if (_cntr > 1)
+	else if (_cntr > 1)
 	{
 	unsigned long adcData = 0; //мгновенные значения тока
 	byte An_pin = ADCL;

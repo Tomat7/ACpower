@@ -58,7 +58,7 @@ public:
 	volatile static float Inow;   		// переменная расчета RMS тока
 	volatile static float Unow;   		// переменная расчета RMS напряжения
 
-	volatile static unsigned int Angle;
+	volatile static int Angle;
 	volatile static uint16_t Pnow;
 	volatile static uint16_t Pset;
 	volatile static uint16_t usZeroCross;
@@ -92,6 +92,7 @@ protected:
 	volatile static byte _admuxU;
 	volatile static byte _zero;
 	
+	volatile static unsigned int _angle;
 	volatile static unsigned int _cntr;
 	volatile static unsigned long _Summ;
 	
