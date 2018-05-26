@@ -30,7 +30,7 @@ volatile unsigned int ACpower::_cntr;
 volatile unsigned long ACpower::_Summ;
 //volatile unsigned long ACpower::_I2summ;
 //volatile unsigned long ACpower::_U2summ;
-volatile unsigned int ACpower::Angle;
+volatile int ACpower::Angle;
 
 volatile float ACpower::Inow;
 volatile float ACpower::Unow;
@@ -181,6 +181,7 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 		_Summ = 0;
 		_zero = 0;
 		//usZeroCross = micros() - usZeroCross;
+		cbi(ADCSRA, ADIF);		// очищаем флаг прерывания от АЦП
 	}
 	return;
 }
