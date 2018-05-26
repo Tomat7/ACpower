@@ -30,7 +30,7 @@
 
 #define LIBVERSION "ACpower_v20180424 zeroI: "
 #define ZERO_OFFSET 100			// минимальный угол открытия. *** возможно нужно больше!! ***
-#define MAX_OFFSET 18000     	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
+#define MAX_OFFSET 19000     	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
 #define PMIN 50				// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
 #define ACS_RATIO5 0.024414063	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 #define ACS_RATIO20 0.048828125	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
@@ -87,7 +87,7 @@ protected:
 	volatile static bool getI;
 	volatile static unsigned int _cntr;
 	volatile static unsigned long _Summ;
-	volatile static unsigned int _angle;
+	//volatile static unsigned int _angle;
 	//unsigned long _ADCmillis;
 	volatile static byte _pinTriac;
 	byte _pinZCross;

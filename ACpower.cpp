@@ -19,7 +19,7 @@
 volatile bool ACpower::getI;
 volatile unsigned int ACpower::_cntr;
 volatile unsigned long ACpower::_Summ;
-volatile unsigned int ACpower::_angle;
+//volatile unsigned int ACpower::_angle;
 volatile static byte ACpower::_pinTriac;
 #ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
@@ -87,7 +87,7 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	
 	pinMode(_pinZCross, INPUT);	//детектор нуля
 	pinMode(_pinTriac, OUTPUT);	//тиристор
-	_angle = MAX_OFFSET;
+	//_angle = MAX_OFFSET;
 	cbi(PORTD, _pinTriac);		//PORTD &= ~(1 << TRIAC);
 	#ifdef CALIBRATE_ZERO
 	_zeroI = calibrate();
@@ -105,7 +105,7 @@ void ACpower::init(float Iratio, float Uratio) //__attribute__((always_inline))
 	TCCR1B = 0x00;
 	TCCR1B = (0 << CS12) | (1 << CS11); // Тактирование от CLK. 20000 отсчетов 1 полупериод. (по таблице внизу)
 	OCR1A = MAX_OFFSET;
-	OCR1B = MAX_OFFSET + 1000;			// и угол закрытия симистора - при установленных параметрах таймера 500 = 0.25 милисек
+	OCR1B = MAX_OFFSET + 500;			// и угол закрытия симистора - при установленных параметрах таймера 500 = 0.25 милисек
 	TIMSK1 |= (1 << OCIE1A);	// Разрешить прерывание по совпадению A
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);	//вызов прерывания при детектировании нуля
@@ -150,7 +150,8 @@ void ACpower::control()
 		} else Angle = MAX_OFFSET;
 		
 		//cli();			// так в умных интернетах пишут, возможно это лишнее - ** и без этого работает **
-		_angle = Angle;
+		//_angle = Angle;
+		OCR1A = int(Angle);				// задаём угол открытия симистора (так cli точно не нужно)
 		//_ADCmillis = millis();		// DEBUG!!
 		_Summ = 0;
 		_cntr = 1025;		// в счетчик установим "кодовое значение", а ZeroCross это проверим
@@ -171,7 +172,7 @@ void ACpower::ZeroCross_int()
 {
 	TCNT1 = 0;  			
 	//cbi(PORTD, _pinTriac);			// PORTD &= ~(1 << TRIAC); установит "0" на выводе D5 - триак закроется
-	OCR1A = int(_angle);				// задаём угол открытия симистора
+	//OCR1A = int(_angle);				// задаём угол открытия симистора
 	//OCR1B = int(_angle + 1000);			// и угол закрытия симистора - при установленных параметрах таймера 1000 = 0.5 милисек
 	if (_cntr == 1025) _cntr = 1050;	// в счетчик установим "кодовое значение", а в GetADC это проверим
 }
