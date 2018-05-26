@@ -167,6 +167,7 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 		_cntr = 0;
 		_zero = 0;
 		usZeroCross = micros() - usZeroCross;
+		cbi(ADCSRA, ADIF);		// очищаем флаг прерывания от АЦП чтобы быть уверенными что следующий расчет будет новым ADMUX
 	}
 	//TCNT1 = 0;
 	return;
