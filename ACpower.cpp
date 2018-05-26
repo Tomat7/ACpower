@@ -154,6 +154,7 @@ void ACpower::control()
 			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
 		} else Angle = MAX_OFFSET;
 		_angle = Angle;
+		OCR1A = int(_angle);
 	}
 	return;
 }
@@ -171,7 +172,7 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
 	//PORTD &= ~(1 << TRIAC); // установит "0" на выводе D5 - триак закроется
 	//cbi(PORTD, TRIAC);
-	OCR1A = int(_angle);
+	//OCR1A = int(_angle);
 	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
 	TCNT1 = 0;
 	_zero++;
