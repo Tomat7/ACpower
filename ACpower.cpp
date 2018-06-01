@@ -80,7 +80,7 @@ void ACpower::init(float Iratio, float Uratio)
 	init(Iratio, Uratio, true);
 }
 
-void ACpower::init(float Iratio, float Uratio, bool SerialInfo)
+void ACpower::init(float Iratio, float Uratio, bool printConfig)
 {  
 	_Iratio = Iratio;
 	_Uratio = Uratio;	
@@ -118,14 +118,16 @@ void ACpower::init(float Iratio, float Uratio, bool SerialInfo)
 	TIMSK1 |= (1 << OCIE1B);	// Разрешить прерывание по совпадению B
 	
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);	//вызов прерывания при детектировании нуля
+	//LibVersion = LIBVERSION + String(_zeroI) + ", U-meter on A" + String(_pinU) + ", ACS712 on A" + String(_pinI);
 	
-	if (SerialInfo)
+	if (printConfig)
 	{
 		Serial.print(F(LIBVERSION));
 		Serial.print(_zeroI);
 		String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
 		Serial.println(ACinfo);
 	}
+	
 	return;
 }
 

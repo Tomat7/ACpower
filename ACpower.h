@@ -66,10 +66,11 @@ public:
 
 	void init();
 	void init(float Iratio, float Uratio);
-	void init(float Iratio, float Uratio, bool SerialInfo);
+	void init(float Iratio, float Uratio, bool printConfig);
 		
 	void control();
 	void setpower(uint16_t setP);
+	//String LibVersion;
 	//=== Прерывания
 	static void ZeroCross_int() __attribute__((always_inline));
 	static void GetADC_int() __attribute__((always_inline));
