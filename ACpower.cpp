@@ -137,9 +137,9 @@ void ACpower::control()
 	{
 		//uint16_t Pold;
 		_zero++;
-		Unow = sqrt(_U2summ / _Ucntr) * _Uratio;  // if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
-		Inow = sqrt(_I2summ / _Icntr) * _Iratio;
-		
+		Unow = sqrt((float)_U2summ / (float)_Ucntr) * _Uratio;  // if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+		Inow = sqrt((float)_I2summ / (float)_Icntr) * _Iratio;  // одного (float) в числителе или знаменателе достаточно
+																// дважды - это с перепугу после прочтения вумных интернетов.
 		Pnow = Inow * Unow;
 		
 		if (Pset > 0)
