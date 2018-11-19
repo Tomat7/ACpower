@@ -6,8 +6,10 @@ ACpower    	KEYWORD1
 # Methods and Functions (KEYWORD2)
 init		KEYWORD2
 control		KEYWORD2
+check		KEYWORD2
 setpower	KEYWORD2
 getpower    KEYWORD2
+printConfig	KEYWORD2
 Pnow		KEYWORD2
 Pset		KEYWORD2
 Pavg		KEYWORD2
