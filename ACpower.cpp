@@ -202,6 +202,7 @@ void ACpower::CloseTriac_int() //__attribute__((always_inline))
 	cbi(PORTD, _pinTriac);
 }
 
+/*
 void ACpower::printConfig()
 {
 	Serial.print(F(LIBVERSION));
@@ -209,6 +210,18 @@ void ACpower::printConfig()
 	String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
 	Serial.println(ACinfo);
 }
+*/
+
+void ACpower::printConfig()
+{
+	Serial.print(F(LIBVERSION));
+	Serial.print(_zeroI);
+	Serial.print(F(", U-meter on A"));
+	Serial.print(_pinU);
+	Serial.print(F(", ACS712 on A"));
+	Serial.println(_pinI);
+}
+
 
 #ifdef CALIBRATE_ZERO
 int ACpower::calibrate() 
