@@ -1,7 +1,7 @@
 # ACpower
 Arduino Hi-Power regulator for AC devices
 
-* 19.11.2018 Updated with new algorithm. See https://github.com/Tomat7/ACpower/tree/base for old version.
+* **19.11.2018** Updated with new algorithm. See https://github.com/Tomat7/ACpower/tree/base for old version.
 
 __Warning! Hi voltage is dangerous! Be careful!__
 =================================================
@@ -16,7 +16,7 @@ See schemas and other details/examples on http://forum.homedistiller.ru/index.ph
 #### Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
 #### Converting to library and combining voltage&current - Tomat7.
 
-* 19.11.2018 Обновлен алгоритм. Старый версия https://github.com/Tomat7/ACpower/tree/base.
+* **19.11.2018** Обновлен алгоритм. Старый версия https://github.com/Tomat7/ACpower/tree/base.
 
 __Внимание! Высокое напряжение опасно для жизни!__
 __Будьте аккуратны и внимательны!__
