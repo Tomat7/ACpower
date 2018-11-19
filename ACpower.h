@@ -28,49 +28,51 @@
 
 #include "Arduino.h"
 
-#define LIBVERSION "ACpower_v20180424 zeroI: "
-#define ZERO_OFFSET 100			// минимальный угол открытия. *** возможно нужно больше!! ***
-#define MAX_OFFSET 19000     	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
-#define PMIN 50				// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
+#define LIBVERSION "ACpower_v20180520 zeroI: "
+#define ZERO_OFFSET 10			// минимальный угол открытия. *** возможно нужно больше!! ***
+#define MAX_OFFSET 19000    	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
 #define ACS_RATIO5 0.024414063	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 #define ACS_RATIO20 0.048828125	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 #define ACS_RATIO30 0.073242188	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 
-//#define CALIBRATE_ZERO  // выполнять процедуру калибровки ноля датчика тока, бывает нужно если ACS712 заметно врёт
+#define PMIN 50				// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
+#define WAVE_COUNT 2  		// сколько полуволн (half-wave) собирать/считать ток и напряжение
+
+//#define CALIBRATE_ZERO  // выполнять процедуру калибровки ноля датчика тока
 #ifndef CALIBRATE_ZERO
 #define _zeroI 512
 #endif
 
-#define EXTEND_U_RANGE
-/*
-увеличение в 2-3 раза "динамического диапазона" АЦП при измерении напряжения 
-требуется изменение схемы и подбора Uratio (возможно перекалибровка измерителя напряжения)
-при Uratio=1 подсчет напряжения идет как и раньше
-*/
-//#define U_RATIO 0.3	// множитель напряжения - теперь он в public и задается при создании объекта
-
-
+//#define U_RATIO 0.2857	// множитель напряжения - теперь он в public и задается при создании объекта
+							// при Uratio=1 подсчет напряжения идет как и раньше - АЦП выдает значение "прямо" в вольтах
+							// хотя может выдавать до 1023, если немного изменить схему, то можно собирать большие значения
+							// увеличив таким образом динамический диапазон и точность измерений
+							// но это требует изменения схемы и перекалибровки измерителя напряжения						
+							
 class ACpower
 {
 public:
 	ACpower(uint16_t Pm);
 	ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712);
-
+	
 	float Inow;   		// переменная расчета RMS тока
 	float Unow;   		// переменная расчета RMS напряжения
 
 	int Angle;
+	//uint16_t Pavg;
 	uint16_t Pnow;
-	//uint16_t Pavg;			// грубо говоря, это средняя мощность за 3 измерения
-	uint16_t Pset;
+	uint16_t Pset = 0;
 	uint16_t Pmax;
 
 	void init();
-	//void init(byte ACS712type);
 	void init(float Iratio, float Uratio);
-	
+	//void init(float Iratio, float Uratio, bool printConfig);
+		
 	void control();
+	void check();
 	void setpower(uint16_t setP);
+	void printConfig();
+	//String LibVersion;
 	//=== Прерывания
 	static void ZeroCross_int() __attribute__((always_inline));
 	static void GetADC_int() __attribute__((always_inline));
@@ -82,22 +84,33 @@ public:
 	#endif
 	
 protected:
+	
 	float _Uratio;
 	float _Iratio;
+
 	volatile static bool getI;
+	volatile static bool takeADC;
+	volatile static byte _admuxI;
+	volatile static byte _admuxU;
+	volatile static byte _zero;
+	
 	volatile static unsigned int _cntr;
+	volatile static unsigned int _Icntr;
+	volatile static unsigned int _Ucntr;
 	volatile static unsigned long _Summ;
-	//volatile static unsigned int _angle;
-	//unsigned long _ADCmillis;
+	volatile static unsigned long ACpower::_I2summ;
+	volatile static unsigned long ACpower::_U2summ;
+	volatile static unsigned int _angle;
+	
 	volatile static byte _pinTriac;
 	byte _pinZCross;
 	byte _pinI;
 	byte _pinU;
-	byte _admuxI;
-	byte _admuxU;
+	
 	#ifdef CALIBRATE_ZERO
 	volatile static int _zeroI;
 	#endif
 };
+//extern ACpower TEH;
 
 #endif
