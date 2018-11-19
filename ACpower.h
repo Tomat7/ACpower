@@ -90,6 +90,7 @@ protected:
 
 	volatile static bool getI;
 	volatile static bool takeADC;
+	volatile static bool newCalc;
 	volatile static byte _admuxI;
 	volatile static byte _admuxU;
 	volatile static byte _zero;

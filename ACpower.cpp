@@ -18,6 +18,7 @@
 
 volatile bool ACpower::getI;
 volatile bool ACpower::takeADC;
+volatile bool ACpower::newCalc;
 volatile byte ACpower::_zero;
 volatile byte ACpower::_admuxI;
 volatile byte ACpower::_admuxU;
@@ -119,20 +120,21 @@ void ACpower::check()
 
 void ACpower::control()
 {	
-	if (_zero == 0)
+	if (newCalc)
 	{
-		//uint16_t Pold;
-		_zero++;
-		Unow = sqrt((float)_U2summ / (float)_Ucntr) * _Uratio;  // if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
-		Inow = sqrt((float)_I2summ / (float)_Icntr) * _Iratio;  // одного (float) в числителе или знаменателе достаточно
-		// дважды - это с перепугу после прочтения вумных интернетов.
+		newCalc = false;
+		
+		if (getI) Unow = sqrt((float)_U2summ / (float)_Ucntr) * _Uratio;  // if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
+		else Inow = sqrt((float)_I2summ / (float)_Icntr) * _Iratio; // одного (float) в числителе или знаменателе достаточно
+																	// дважды - это с перепугу после прочтения вумных интернетов.
 		Pnow = Inow * Unow;
 		
 		if (Pset > 0)
 		{	
 			Angle += Pnow - Pset;
 			Angle = constrain(Angle, ZERO_OFFSET, MAX_OFFSET);
-		} else Angle = MAX_OFFSET;
+		} 
+		else Angle = MAX_OFFSET;
 		_angle = Angle;
 		//OCR1A = int(_angle);
 	}
@@ -158,7 +160,7 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
 	_zero++;
 	
-	if (_zero >= (WAVE_COUNT + 1)) 
+	if (_zero >= (WAVE_COUNT)) 
 	{ 
 		takeADC = false;
 		if (getI) 
@@ -175,6 +177,7 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 			_U2summ = _Summ;
 			_Ucntr = _cntr;
 		}
+		newCalc = true;
 		_Summ = 0;
 		_zero = 0;
 		_cntr = 0;
@@ -215,8 +218,10 @@ void ACpower::printConfig()
 {
 	Serial.print(F(LIBVERSION));
 	Serial.print(_zeroI);
-	String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
-	Serial.println(ACinfo);
+	Serial.print(F(", U-meter on A"));
+	Serial.print(_pinU);
+	Serial.print(F(", ACS712 on A"));
+	Serial.println(_pinI);
 }
 
 #ifdef CALIBRATE_ZERO
