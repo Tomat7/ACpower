@@ -220,7 +220,7 @@ void ACpower::printConfig()
 	Serial.print(_zeroI);
 	Serial.print(F(", U-meter on A"));
 	Serial.print(_pinU);
-	Serial.print(F(", ACS712 on A"));
+	Serial.print(F(", I-meter on A"));
 	Serial.println(_pinI);
 }
 
