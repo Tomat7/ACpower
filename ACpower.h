@@ -28,7 +28,7 @@
 
 #include "Arduino.h"
 
-#define LIBVERSION "ACpower_v20180520 zeroI: "
+#define LIBVERSION "ACpower_v20181119 zeroI: "
 #define ZERO_OFFSET 10			// минимальный угол открытия. *** возможно нужно больше!! ***
 #define MAX_OFFSET 19000    	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
 #define ACS_RATIO5 0.024414063	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
