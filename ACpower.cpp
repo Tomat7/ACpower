@@ -66,14 +66,10 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 void ACpower::init()
 {
 	init(ACS_RATIO20, 1);
+	printConfig();
 }
 
 void ACpower::init(float Iratio, float Uratio)
-{
-	init(Iratio, Uratio, true);
-}
-
-void ACpower::init(float Iratio, float Uratio, bool printConfig)
 {  
 	_Iratio = Iratio;
 	_Uratio = Uratio;	
@@ -113,15 +109,12 @@ void ACpower::init(float Iratio, float Uratio, bool printConfig)
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, RISING);	//вызов прерывания при детектировании нуля
 	//LibVersion = LIBVERSION + String(_zeroI) + ", U-meter on A" + String(_pinU) + ", ACS712 on A" + String(_pinI);
 	
-	if (printConfig)
-	{
-		Serial.print(F(LIBVERSION));
-		Serial.print(_zeroI);
-		String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
-		Serial.println(ACinfo);
-	}
-	
 	return;
+}
+
+void ACpower::check()
+{
+	control();
 }
 
 void ACpower::control()
@@ -132,7 +125,7 @@ void ACpower::control()
 		_zero++;
 		Unow = sqrt((float)_U2summ / (float)_Ucntr) * _Uratio;  // if Uratio !=1 требуется изменение схемы и перекалибровка подстроечником!
 		Inow = sqrt((float)_I2summ / (float)_Icntr) * _Iratio;  // одного (float) в числителе или знаменателе достаточно
-																// дважды - это с перепугу после прочтения вумных интернетов.
+		// дважды - это с перепугу после прочтения вумных интернетов.
 		Pnow = Inow * Unow;
 		
 		if (Pset > 0)
@@ -154,6 +147,7 @@ void ACpower::setpower(uint16_t setPower)
 	else Pset = setPower;
 	return;
 }
+
 
 void ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
@@ -215,6 +209,14 @@ void ACpower::OpenTriac_int() //__attribute__((always_inline))
 void ACpower::CloseTriac_int() //__attribute__((always_inline))
 {
 	cbi(PORTD, _pinTriac);
+}
+
+void ACpower::printConfig()
+{
+	Serial.print(F(LIBVERSION));
+	Serial.print(_zeroI);
+	String ACinfo = ", U-meter on A" + String(_pinU, DEC) + ", ACS712 on A" + String(_pinI);
+	Serial.println(ACinfo);
 }
 
 #ifdef CALIBRATE_ZERO

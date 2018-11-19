@@ -66,10 +66,12 @@ public:
 
 	void init();
 	void init(float Iratio, float Uratio);
-	void init(float Iratio, float Uratio, bool printConfig);
+	//void init(float Iratio, float Uratio, bool printConfig);
 		
 	void control();
+	void check();
 	void setpower(uint16_t setP);
+	void printConfig();
 	//String LibVersion;
 	//=== Прерывания
 	static void ZeroCross_int() __attribute__((always_inline));
