@@ -1,6 +1,6 @@
 # ACpower
 Arduino Hi-Power regulator for AC devices
-
+__19.11.2018 Updated with new algorithm. See https://github.com/Tomat7/ACpower/tree/base for old version__
 __Warning! Hi voltage is dangerous! Be careful!__
 =================================================
 
