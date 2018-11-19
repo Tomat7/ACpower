@@ -10,9 +10,10 @@ LiquidCrystal_I2C lcd(0x3F, 16, 2); // 0x3F - адрес на шине I2C, пр
 // Для подключения ЛСД экрана через I2C необходимо "найти" его адрес программой i2c_scanner.ino
 // https://github.com/marcoschwartz/LiquidCrystal_I2C
 
-#define ACS_RATIO5 0.024414063	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
-#define ACS_RATIO20 0.048828125	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
-#define ACS_RATIO30 0.073242188	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
+// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
+#define ACS_RATIO5 0.024414063	
+#define ACS_RATIO20 0.048828125
+#define ACS_RATIO30 0.073242188
 
 /*
 все подробности http://forum.homedistiller.ru/index.php?topic=166750.0
@@ -43,6 +44,7 @@ void setup()
 {
 	Serial.begin(SERIALSPEED);
 	TEH.init(ACS_RATIO20, 1);
+	TEH.printConfig();
 	// TEH.init();					//вызов без параметров подразумевает датчик тока ACS712-20A и откалиброванный датчик напряжения
 	// TEH.init(ACS_RATIO20, 1);	// можно задать коэффициенты (множители) датчиков тока и напряжения
 	// TEH.init(0.029, 1);			// для трансформатора тока
@@ -71,8 +73,7 @@ void showInfo()
 {
 	Serial.print("Pnow=");
 	Serial.println(TEH.Pnow);
-	Serial.print("Pavg=");
-	Serial.println(TEH.Pavg);	// Pavg - это "средняя" мощность (грубо говоря - усредненная за 3 цикла подсчета)
+
 	Serial.print("Pset=");
 	Serial.println(TEH.Pset);
 
@@ -90,7 +91,7 @@ void lcdInfo()
 	lcd.print("          ");
 	lcd.setCursor(0, 0);
 	lcd.print("Pnow:");
-	lcd.print(TEH.Pavg);					// здесь покажем "среднюю" мощность
+	lcd.print(TEH.Pnow);
 	if (TEH.Pnow < 1000) lcd.print("w");
 	lcd.setCursor(10, 0);
 	lcd.print("U:");
