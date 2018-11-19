@@ -16,8 +16,6 @@
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-//ACpower TEH;              // preinstatiate
-
 volatile bool ACpower::getI;
 volatile bool ACpower::takeADC;
 volatile byte ACpower::_zero;
@@ -38,19 +36,14 @@ volatile int ACpower::_zeroI;
 //=== Обработка прерывания по совпадению OCR1A (угла открытия) и счетчика TCNT1 
 // (который сбрасывается в "0" по zero_crosss_int) 
 
-ISR(TIMER1_COMPA_vect) {
-	ACpower::OpenTriac_int();
-}
+ISR(TIMER1_COMPA_vect) { ACpower::OpenTriac_int(); }
 
 // ==== Обработка прерывания по переполнению таймера. необходима для "гашения" триака 
-ISR(TIMER1_COMPB_vect) { //timer1 overflow
-	ACpower::CloseTriac_int();
-}
+ISR(TIMER1_COMPB_vect) { ACpower::CloseTriac_int(); }		//timer1 overflow
 
 //================= Обработка прерывания АЦП для расчета среднеквадратичного тока
-ISR(ADC_vect) {
-	ACpower::GetADC_int();
-}
+ISR(ADC_vect) { ACpower::GetADC_int(); }
+
 
 ACpower::ACpower(uint16_t Pm)
 {
@@ -171,7 +164,7 @@ void ACpower::ZeroCross_int() //__attribute__((always_inline))
 	//OCR1B = int(_angle + 1000); // можно и один раз в самом начале.
 	_zero++;
 	
-	if (_zero == (WAVE_COUNT + 1)) 
+	if (_zero >= (WAVE_COUNT + 1)) 
 	{ 
 		takeADC = false;
 		if (getI) 
