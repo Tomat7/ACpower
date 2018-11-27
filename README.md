@@ -8,10 +8,10 @@ __Warning! Hi voltage is dangerous! Be careful!__
 
 See schemas and other details/examples on http://forum.homedistiller.ru/index.php?topic=166750.0
 ### Connections:
-* **any A0-A7** - Voltage meter (originally A0)
-* **any A0-A7** - ACS712 (originally A1)
+* **any of A0-A7** - Voltage meter (originally A0)
+* **any of A0-A7** - ACS712 (originally A1)
 * **D2 or D3** - ZeroCross detector (originally D3)
-* **any D0-D7** - Triac (originally D5)
+* **any of D0-D7** - Triac (originally D5)
 
 
 #### Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
