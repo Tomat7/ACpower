@@ -8,10 +8,11 @@ __Warning! Hi voltage is dangerous! Be careful!__
 
 See schemas and other details/examples on http://forum.homedistiller.ru/index.php?topic=166750.0
 ### Connections:
-* **A0** - Voltage meter 
-* **A1** - ACS712
-* **D3** - ZeroCross detector 
-* **D5** - Triac
+* **A0** - Voltage meter (any analog pin)
+* **A1** - ACS712 (any analog pin)
+* **D3** - ZeroCross detector (D2 or D3 only)
+* **D5** - Triac (any digital pin)
+
 
 #### Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
 #### Converting to library and combining voltage&current - Tomat7.
