@@ -14,8 +14,10 @@ See schemas and other details/examples on http://forum.homedistiller.ru/index.ph
 * **any of D0-D7** - Triac (originally D5)
 
 
-#### Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
-#### Converting to library and combining voltage&current - Tomat7.
+#### Original project (c) Sebra. 
+#### Regulating algorithm (c) Chatterbox. 
+#### Many thanks to both of them!
+#### Converting to library, combining voltage&current meters, updated algorithm (c) Tomat7.
 
 * **19.11.2018** Обновлен алгоритм. Старый версия https://github.com/Tomat7/ACpower/tree/base.
 
@@ -31,5 +33,6 @@ __Будьте аккуратны и внимательны!__
 * **D2 или D3** - детектор нуля
 * **любой из D0-D7** - управление триаком
 
-#### Оригинальная идея (c) Sebra, Алгоритм регулирования (c) Chatterbox
-#### Вольный перевод в библиотеку и совмещение регулятора тока и напряжения - Tomat7.
+#### Оригинальная идея (c) Sebra.
+#### Алгоритм регулирования (c) Chatterbox.
+#### Перевод в библиотеку, совмещение регулятора тока и напряжения, обновленный алгоритм (c) Tomat7.
