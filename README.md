@@ -19,6 +19,8 @@ See schemas and other details/examples on http://forum.homedistiller.ru/index.ph
 #### Many thanks to both of them!
 #### Converting to library, combining voltage&current meters, updated algorithm (c) Tomat7.
 
+
+
 * **19.11.2018** Обновлен алгоритм. Старый версия https://github.com/Tomat7/ACpower/tree/base.
 
 __Внимание! Высокое напряжение опасно для жизни!__
