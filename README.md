@@ -8,10 +8,10 @@ __Warning! Hi voltage is dangerous! Be careful!__
 
 See schemas and other details/examples on http://forum.homedistiller.ru/index.php?topic=166750.0
 ### Connections:
-* **A0** - Voltage meter (any analog pin)
-* **A1** - ACS712 (any analog pin)
-* **D3** - ZeroCross detector (D2 or D3 only)
-* **D5** - Triac (any digital pin)
+* **A0-A7** - Voltage meter (originally A0)
+* **A0-A7** - ACS712 (originally A1)
+* **D2-D3** - ZeroCross detector (originally D3)
+* **D0-D7** - Triac (originally D5)
 
 
 #### Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
@@ -26,7 +26,7 @@ __Будьте аккуратны и внимательны!__
 Схемы, примеры и подробности - http://forum.homedistiller.ru/index.php?topic=166750.0
 
 ### Подключения:
-* **A0** - подключение "измерителя" напряжения (трансформатор, диодный мост, делитель напряжения)
+* **A0** - подключение "измерителя" напряжения - трансформатор, диодный мост, делитель напряжения
 * **A1** - подключение датчика тока ACS712
 * **D3** - детектор нуля
 * **D5** - управление триаком
