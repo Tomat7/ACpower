@@ -230,7 +230,7 @@ int ACpower::calibrate()
 	int zero = 0;
 	for (int i = 0; i < 10; i++) {
 		delay(10);
-		zero += analogRead(A1);
+		zero += analogRead(_pinI + 14);
 	}
 	zero /= 10;
 	return zero;
