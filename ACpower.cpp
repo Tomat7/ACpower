@@ -34,15 +34,15 @@ volatile byte ACpower::_pinTriac;
 #ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
 #endif
-//=== Обработка прерывания по совпадению OCR1A (угла открытия) и счетчика TCNT1 
+// === Обработка прерывания по совпадению OCR1A (угла открытия) и счетчика TCNT1 
 // (который сбрасывается в "0" по zero_crosss_int) 
 
 ISR(TIMER1_COMPA_vect) { ACpower::OpenTriac_int(); }
 
-// ==== Обработка прерывания по переполнению таймера. необходима для "гашения" триака 
+// === Обработка прерывания по совпадению OCR1B для "гашения" триака 
 ISR(TIMER1_COMPB_vect) { ACpower::CloseTriac_int(); }		//timer1 overflow
 
-//================= Обработка прерывания АЦП для расчета среднеквадратичного тока
+// === Обработка прерывания АЦП для сбора измеренных значений 
 ISR(ADC_vect) { ACpower::GetADC_int(); }
 
 
@@ -92,7 +92,7 @@ void ACpower::init(float Iratio, float Uratio)
 	ADMUX = _admuxI;			// начинаем со сбора тока
 	getI = true;
 	takeADC = false;
-	//_Summ=0;
+
 	//Включение АЦП
 	ADCSRA = B11101111; 
 	ACSR = (1 << ACD);
