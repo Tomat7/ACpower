@@ -99,8 +99,8 @@ protected:
 	volatile static unsigned int _Icntr;
 	volatile static unsigned int _Ucntr;
 	volatile static unsigned long _Summ;
-	volatile static unsigned long ACpower::_I2summ;
-	volatile static unsigned long ACpower::_U2summ;
+	volatile static unsigned long _I2summ;
+	volatile static unsigned long _U2summ;
 	volatile static unsigned int _angle;
 	
 	volatile static byte _pinTriac;
