@@ -74,10 +74,10 @@ public:
 	void printConfig();
 	//String LibVersion;
 	//=== Прерывания
-	static void ZeroCross_int() __attribute__((always_inline));
-	static void GetADC_int() __attribute__((always_inline));
-	static void OpenTriac_int() __attribute__((always_inline));
-	static void CloseTriac_int() __attribute__((always_inline));
+	static void ZeroCross_int(); // __attribute__((always_inline));
+	static void GetADC_int(); // __attribute__((always_inline));
+	static void OpenTriac_int(); // __attribute__((always_inline));
+	static void CloseTriac_int(); //__attribute__((always_inline));
 	// === test
 	#ifdef CALIBRATE_ZERO
 	int calibrate();
