@@ -48,7 +48,14 @@
 							// хотя может выдавать до 1023, если немного изменить схему, то можно собирать большие значения
 							// увеличив таким образом динамический диапазон и точность измерений
 							// но это требует изменения схемы и перекалибровки измерителя напряжения						
+
 							
+enum acs_t {
+    ACS712_5,
+    ACS712_20,
+    ACS712_30
+};
+
 class ACpower
 {
 public:
@@ -65,6 +72,7 @@ public:
 	uint16_t Pmax;
 
 	void init();
+	void init(acs_t ACStype);
 	void init(float Iratio, float Uratio);
 	//void init(float Iratio, float Uratio, bool printConfig);
 		
