@@ -50,7 +50,7 @@
 							// но это требует изменения схемы и перекалибровки измерителя напряжения						
 
 							
-enum acs_t {
+enum acs712_t {
     ACS712_5,
     ACS712_20,
     ACS712_30
@@ -72,7 +72,7 @@ public:
 	uint16_t Pmax;
 
 	void init();
-	void init(acs_t ACStype);
+	void init(acs712_t ACStype);
 	void init(float Iratio, float Uratio);
 	//void init(float Iratio, float Uratio, bool printConfig);
 		

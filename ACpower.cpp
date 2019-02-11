@@ -70,7 +70,7 @@ void ACpower::init()
 	printConfig();
 }
 
-void ACpower::init(acs_t ACStype)
+void ACpower::init(acs712_t ACStype)
 {
 	float ACSratio[] = { ACS_RATIO5, ACS_RATIO20, ACS_RATIO30 };
 	init(ACSratio[ACStype], 1);
