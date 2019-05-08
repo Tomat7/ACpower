@@ -36,7 +36,7 @@
 #define ACS_RATIO30 0.073242188	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
 
 #define PMIN 50				// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
-#define WAVE_COUNT 2  		// сколько полуволн (half-wave) собирать/считать ток и напряжение
+#define WAVE_COUNT 4  		// сколько полуволн (half-wave) собирать/считать ток и напряжение
 
 //#define CALIBRATE_ZERO  // выполнять процедуру калибровки ноля датчика тока
 #ifndef CALIBRATE_ZERO
@@ -48,7 +48,14 @@
 							// хотя может выдавать до 1023, если немного изменить схему, то можно собирать большие значения
 							// увеличив таким образом динамический диапазон и точность измерений
 							// но это требует изменения схемы и перекалибровки измерителя напряжения						
+
 							
+enum acs712_t {
+    ACS712_5,
+    ACS712_20,
+    ACS712_30
+};
+
 class ACpower
 {
 public:
@@ -59,23 +66,26 @@ public:
 	float Unow;   		// переменная расчета RMS напряжения
 
 	int Angle;
+	//uint16_t Pavg;
 	uint16_t Pnow;
 	uint16_t Pset = 0;
 	uint16_t Pmax;
 
 	void init();
+	void init(acs712_t ACStype);
 	void init(float Iratio, float Uratio);
+	//void init(float Iratio, float Uratio, bool printConfig);
 		
 	void control();
 	void check();
 	void setpower(uint16_t setP);
 	void printConfig();
-
+	//String LibVersion;
 	//=== Прерывания
-	static void ZeroCross_int() __attribute__((always_inline));
-	static void GetADC_int() __attribute__((always_inline));
-	static void OpenTriac_int() __attribute__((always_inline));
-	static void CloseTriac_int() __attribute__((always_inline));
+	static void ZeroCross_int(); // __attribute__((always_inline));
+	static void GetADC_int(); // __attribute__((always_inline));
+	static void OpenTriac_int(); // __attribute__((always_inline));
+	static void CloseTriac_int(); //__attribute__((always_inline));
 	// === test
 	#ifdef CALIBRATE_ZERO
 	int calibrate();
@@ -88,6 +98,7 @@ protected:
 
 	volatile static bool getI;
 	volatile static bool takeADC;
+	volatile static bool newCalc;
 	volatile static byte _admuxI;
 	volatile static byte _admuxU;
 	volatile static byte _zero;
@@ -96,8 +107,8 @@ protected:
 	volatile static unsigned int _Icntr;
 	volatile static unsigned int _Ucntr;
 	volatile static unsigned long _Summ;
-	volatile static unsigned long ACpower::_I2summ;
-	volatile static unsigned long ACpower::_U2summ;
+	volatile static unsigned long _I2summ;
+	volatile static unsigned long _U2summ;
 	volatile static unsigned int _angle;
 	
 	volatile static byte _pinTriac;
@@ -109,5 +120,6 @@ protected:
 	volatile static int _zeroI;
 	#endif
 };
+//extern ACpower TEH;
 
 #endif
