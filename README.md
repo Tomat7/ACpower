@@ -25,7 +25,7 @@ See schemas and other details/examples on http://forum.homedistiller.ru/index.ph
 =============================================================
    
 * **19.11.2018** Обновлен алгоритм. Старый версия https://github.com/Tomat7/ACpower/tree/base.
-* **8.9.2019** Чистка кода. Видимо это финальная версия для AVR, ухожу на ESP32 https://tomat.visualstudio.com/ESP32-AC-power
+* **8.9.2019** Видимо это финальная версия для AVR, ухожу на ESP32 https://tomat.visualstudio.com/ESP32-AC-power
 
 __Внимание! Высокое напряжение опасно для жизни!__
 __Будьте аккуратны и внимательны!__
