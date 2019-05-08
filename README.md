@@ -2,7 +2,7 @@
 Arduino Hi-Power regulator for AC devices
 
 * **19.11.2018** Updated with new algorithm. See https://github.com/Tomat7/ACpower/tree/base for old version.
-* **8.5.2019** Updated algorithm. Possible, it is final for AVR. See https://tomat.visualstudio.com/ESP32-AC-power
+* **8.5.2019** Cleanup code. Possible, it is final for AVR. See https://tomat.visualstudio.com/ESP32-AC-power
 
 For full track of changes see other branches.
 The most "working" branch https://github.com/Tomat7/ACpower/tree/experimental
@@ -25,6 +25,7 @@ See schemas and other details/examples on http://forum.homedistiller.ru/index.ph
 =============================================================
    
 * **19.11.2018** Обновлен алгоритм. Старый версия https://github.com/Tomat7/ACpower/tree/base.
+* **8.9.2019** Чистка кода. Видимо это финальная версия для AVR, ухожу на ESP32 https://tomat.visualstudio.com/ESP32-AC-power
 
 __Внимание! Высокое напряжение опасно для жизни!__
 __Будьте аккуратны и внимательны!__
