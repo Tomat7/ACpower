@@ -24,7 +24,7 @@ See schemas and other details/examples on http://forum.homedistiller.ru/index.ph
 #### Converting to library, combining voltage&current meters, updated algorithm (c) Tomat7.
 =============================================================
    
-* **19.11.2018** Обновлен алгоритм. Старый версия https://github.com/Tomat7/ACpower/tree/base.
+* **19.11.2018** Обновлен алгоритм. Старая версия https://github.com/Tomat7/ACpower/tree/base.
 * **8.9.2019** Видимо это финальная версия для AVR. Переключился на ESP32 https://tomat.visualstudio.com/ESP32-AC-power
 
 __Внимание! Высокое напряжение опасно для жизни!__
