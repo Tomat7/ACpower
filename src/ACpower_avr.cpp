@@ -9,6 +9,8 @@
 #include "ACpower.h"
 // defines for setting and clearing register bits
 
+#if defined(__AVR__)
+
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
@@ -243,6 +245,8 @@ int ACpower::calibrate()
 	return zero;
 }
 #endif
+
+#endif // __AVR__
 
 /*
 	//===========================================================Настройка АЦП

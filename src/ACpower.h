@@ -25,10 +25,12 @@
 */
 #ifndef ACpower_h
 #define ACpower_h
-
 #include "Arduino.h"
 
+#if defined(__AVR__)
+
 #define LIBVERSION "ACpower_v20181119 zeroI: "
+
 #define ZERO_OFFSET 10			// минимальный угол открытия. *** возможно нужно больше!! ***
 #define MAX_OFFSET 19000    	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
 #define ACS_RATIO5 0.024414063	// Коэффициент датчика ACS712 |5А - 0.024414063 | 20А - 0.048828125 | 30A - 0.073242188 |
@@ -48,8 +50,7 @@
 							// хотя может выдавать до 1023, если немного изменить схему, то можно собирать большие значения
 							// увеличив таким образом динамический диапазон и точность измерений
 							// но это требует изменения схемы и перекалибровки измерителя напряжения						
-
-							
+						
 enum acs712_t {
     ACS712_5,
     ACS712_20,
@@ -120,6 +121,12 @@ protected:
 	volatile static int _zeroI;
 	#endif
 };
-//extern ACpower TEH;
 
-#endif
+#elif defined(ESP32)
+#include "ACpower_esp32.h"
+
+#else
+#error Use AVR or ESP32 board.
+#endif //__AVR__
+
+#endif //ACpower_h
