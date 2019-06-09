@@ -77,36 +77,54 @@ public:
 	static void ZeroCross_int(); // __attribute__((always_inline));
 	static void GetADC_int(); // __attribute__((always_inline));
 	static void OpenTriac_int(); // __attribute__((always_inline));
-	static void CloseTriac_int(); //__attribute__((always_inline));
+	//static void CloseTriac_int(); //__attribute__((always_inline));
 	// === test
 	#ifdef CALIBRATE_ZERO
 	int calibrate();
 	#endif
 	
 protected:
-	
-	float _Uratio;
-	float _Iratio;
 
-	volatile static bool getI;
-	volatile static bool takeADC;
-	volatile static bool newCalc;
-	volatile static byte _admuxI;
-	volatile static byte _admuxU;
-	volatile static byte _zero;
-	
-	volatile static unsigned int _cntr;
-	volatile static unsigned int _Icntr;
-	volatile static unsigned int _Ucntr;
-	volatile static unsigned long _Summ;
-	volatile static unsigned long _I2summ;
-	volatile static unsigned long _U2summ;
-	volatile static unsigned int _angle;
-	
-	volatile static byte _pinTriac;
-	uint8_t _pinZCross;
-	uint8_t _pinI;
-	uint8_t _pinU;
+TaskHandle_t taskADC = NULL;
+TaskHandle_t taskUPD = NULL;
+hw_timer_t * timerADC = NULL;
+hw_timer_t * timerTriac = NULL;
+volatile SemaphoreHandle_t smphADC, smphZC;
+volatile SemaphoreHandle_t smphTriac;
+volatile SemaphoreHandle_t smphRMS, smI, smU;
+portMUX_TYPE muxTriac = portMUX_INITIALIZER_UNLOCKED;
+portMUX_TYPE muxADC = portMUX_INITIALIZER_UNLOCKED;
+
+volatile bool getI = true;
+volatile bool takeADC = false;
+volatile bool trOpened = false;
+volatile uint8_t _zero = 1;
+volatile uint8_t _pin = PIN_I;
+volatile int16_t Xnow;
+volatile uint32_t X2;
+
+volatile uint64_t _summ = 0;
+volatile uint64_t _I2summ = 0;
+volatile uint64_t _U2summ = 0;
+
+volatile uint32_t _cntr = 1;
+volatile uint32_t _Icntr = 1;
+volatile uint32_t _Ucntr = 1;
+
+volatile uint16_t _zerolevel = 0;
+volatile uint16_t _Izerolevel = 0;
+volatile uint16_t _Uzerolevel = 0;
+
+volatile uint32_t _msZCmillis = 0;
+volatile uint16_t _angle = 0; 
+volatile uint32_t _cntrZC = 0;
+volatile uint32_t _tmrTriacNow = 0;
+
+float Inow = 0, Unow = 0;
+int16_t Angle;
+uint16_t Pset = 0, Pnow = 0;
+
+
 	
 	#ifdef CALIBRATE_ZERO
 	volatile static int _zeroI;
