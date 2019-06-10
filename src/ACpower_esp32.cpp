@@ -12,6 +12,7 @@
 #if defined(ESP32)
 
 #define DELAYx vTaskDelay(300 / portTICK_PERIOD_MS)
+
 #define PRINTF(a, ...) Serial.print(a); Serial.println(__VA_ARGS__)
 #define PRINTLN(...) (Serial.println(__VA_ARGS__))
 #define PRINT(...) (Serial.print(__VA_ARGS__))
@@ -37,13 +38,13 @@ volatile SemaphoreHandle_t ACpower::smphRMS;
 portMUX_TYPE ACpower::muxADC = portMUX_INITIALIZER_UNLOCKED;
 hw_timer_t *ACpower::timerTriac = NULL;
 
-volatile bool ACpower::getI;
-volatile bool ACpower::takeADC;
+volatile bool ACpower::getI = true;
+volatile bool ACpower::takeADC = false;
 
 volatile int16_t ACpower::Xnow;
 volatile uint32_t ACpower::X2;
 
-volatile uint8_t ACpower::_zero;
+volatile uint8_t ACpower::_zero = 1;
 volatile uint32_t ACpower::CounterZC;
 volatile uint32_t ACpower::CounterTR;
 
@@ -52,15 +53,15 @@ uint8_t ACpower::_pinI;
 uint8_t ACpower::_pinU;
 uint8_t ACpower::_pinTriac;
 
-volatile uint32_t ACpower::_cntr;
-volatile uint32_t ACpower::_Icntr;
-volatile uint32_t ACpower::_Ucntr;
+volatile uint32_t ACpower::_cntr = 1;
+volatile uint32_t ACpower::_Icntr = 1;
+volatile uint32_t ACpower::_Ucntr = 1;
 
-volatile uint64_t ACpower::_summ;
-volatile uint64_t ACpower::_I2summ;
-volatile uint64_t ACpower::_U2summ;
+volatile uint64_t ACpower::_summ = 0;
+volatile uint64_t ACpower::_I2summ = 0;
+volatile uint64_t ACpower::_U2summ = 0;
 
-volatile uint16_t ACpower::_zerolevel;
+volatile uint16_t ACpower::_zerolevel = 0;
 uint16_t ACpower::_Izerolevel = I_ZERO;
 uint16_t ACpower::_Uzerolevel = U_ZERO;
 
@@ -84,6 +85,7 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_pinTriac = pinTriac;		// пин управляющий триаком. 
 	_pinU = pinVoltage;		// аналоговый пин к которому подключен модуль измерения напряжения
 	_pinI = pinCurrent;		// аналоговый пин к которому подключен датчик ACS712 или траснформатор тока
+	_pin = _pinI;
 	return;
 }
 
@@ -101,7 +103,7 @@ void ACpower::setup_Triac()
 	pinMode(_pinTriac, OUTPUT);
 	_angle = 0; // MAX_OFFSET;
 	//smphTriac = xSemaphoreCreateBinary();
-	timerTriac = timerBegin(0, 80, true);
+	timerTriac = timerBegin(TIMER_TRIAC, 80, true);
 	timerAttachInterrupt(timerTriac, &ACpower::OpenTriac_int, true);
 	timerAlarmWrite(timerTriac, (ANGLE_MAX + ANGLE_DELTA), true);
 	timerAlarmEnable(timerTriac);
@@ -134,10 +136,10 @@ void ACpower::setup_ADC()
 	timerAlarmWrite(timerADC, usADCinterval, true);
 	timerAlarmEnable(timerADC);
 	PRINTLN("+ ADC Inerrupt setup OK");
-	PRINTF(".  ADC microSeconds between samples: ", usADCinterval);
-	PRINTF(".  ADC samples per half-wave: ", ADC_RATE);
-	PRINTF(".  ADC samples per calculation set: ", ADCperSet);
-	PRINTF(".  ADC half-waves per calculation set: ", ADC_WAVES);
+	PRINTF(". ADC microSeconds between samples: ", usADCinterval);
+	PRINTF(". ADC samples per half-wave: ", ADC_RATE);
+	PRINTF(". ADC samples per calculation set: ", ADCperSet);
+	PRINTF(". ADC half-waves per calculation set: ", ADC_WAVES);
 	return;
 }
 
