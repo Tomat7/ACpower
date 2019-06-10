@@ -57,8 +57,8 @@
 #define TIMER_TRIAC 0
 #define TIMER_ADC 1
 
-//#define DEBUG1
-//#define DEBUG2
+#define DEBUG1
+#define DEBUG2
 
 class ACpower
 {
@@ -77,12 +77,16 @@ public:
 	volatile static uint32_t CounterTR;
 	uint32_t CounterRMS = 0;
 
+	volatile static int16_t Xnow;
+	volatile static uint32_t X2;
+	
 	void init(float Iratio, float Uratio);
 	
 	void control();
 	void check();
 	void setpower(uint16_t setP);
 	void printConfig();
+	void calibrate();
 	//=== Прерывания
 	static void ZeroCross_int(); // __attribute__((always_inline));
 	static void GetADC_int(); // __attribute__((always_inline));
@@ -96,44 +100,34 @@ public:
 	volatile static uint16_t ADCprio;
 	volatile static uint32_t TRIACcore;
 	volatile static uint16_t TRIACprio;
+	volatile static uint32_t CounterTRopen;
+	volatile static uint32_t CounterTRclose;
+	volatile static uint64_t TRIACtimerOpen, TRIACtimerClose;
 	uint32_t RMScore;
 	uint16_t RMSprio;
 #endif
 
-#ifdef CALIBRATE_ZERO
-	int calibrate();
-#endif
-	
+
 protected:
-	//TaskHandle_t taskADC = NULL;
-	//TaskHandle_t taskUPD = NULL;
 	void setup_ZeroCross();
 	void setup_Triac();
 	void setup_ADC();
 	
-	hw_timer_t* timerADC;
+	hw_timer_t* timerADC = NULL;
 	static hw_timer_t* timerTriac;
-	//volatile static SemaphoreHandle_t smphADC, smphZC;
 	volatile static SemaphoreHandle_t smphTriac;
 	volatile static SemaphoreHandle_t smphRMS;
-	//, smI, smU;
 	//portMUX_TYPE muxTriac = portMUX_INITIALIZER_UNLOCKED;
-	static portMUX_TYPE volatile muxADC;
-	//= portMUX_INITIALIZER_UNLOCKED;
+	static portMUX_TYPE muxADC;
 
 	volatile static bool getI;
 	volatile static bool takeADC;
-	volatile static bool trOpened;
 
 	volatile static uint8_t _zero;
-	
-	volatile static int16_t Xnow;
-	volatile static uint32_t X2;
-
 	volatile static uint8_t _pin;
-	volatile static uint8_t _pinI;
-	volatile static uint8_t _pinU;
-	volatile static uint8_t _pinTriac;
+	static uint8_t _pinI;
+	static uint8_t _pinU;
+	static uint8_t _pinTriac;
 	uint8_t _pinZCross;
 	
 	volatile static uint64_t _summ;
@@ -145,12 +139,13 @@ protected:
 	volatile static uint32_t _Ucntr;
 
 	volatile static uint16_t _zerolevel;
-	volatile static uint16_t _Izerolevel;
-	volatile static uint16_t _Uzerolevel;
+	static uint16_t _Izerolevel;
+	static uint16_t _Uzerolevel;
 
 	volatile static uint32_t _msZCmillis;
+    volatile static bool trOpened;
 
-	volatile static uint32_t _cntrZC;
+	//volatile static uint32_t _cntrZC;
 	//volatile static uint32_t _tmrTriacNow;
 
 	volatile static uint16_t _angle; 

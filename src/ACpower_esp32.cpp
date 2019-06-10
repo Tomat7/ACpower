@@ -34,7 +34,8 @@
 
 volatile SemaphoreHandle_t ACpower::smphTriac;
 volatile SemaphoreHandle_t ACpower::smphRMS;
-portMUX_TYPE volatile ACpower::muxADC = portMUX_INITIALIZER_UNLOCKED;
+portMUX_TYPE ACpower::muxADC = portMUX_INITIALIZER_UNLOCKED;
+hw_timer_t *ACpower::timerTriac = NULL;
 
 volatile bool ACpower::getI;
 volatile bool ACpower::takeADC;
@@ -47,9 +48,9 @@ volatile uint32_t ACpower::CounterZC;
 volatile uint32_t ACpower::CounterTR;
 
 volatile uint8_t ACpower::_pin;
-volatile uint8_t ACpower::_pinI;
-volatile uint8_t ACpower::_pinU;
-volatile uint8_t ACpower::_pinTriac;
+uint8_t ACpower::_pinI;
+uint8_t ACpower::_pinU;
+uint8_t ACpower::_pinTriac;
 
 volatile uint32_t ACpower::_cntr;
 volatile uint32_t ACpower::_Icntr;
@@ -60,22 +61,21 @@ volatile uint64_t ACpower::_I2summ;
 volatile uint64_t ACpower::_U2summ;
 
 volatile uint16_t ACpower::_zerolevel;
-volatile uint16_t ACpower::_Izerolevel;
-volatile uint16_t ACpower::_Uzerolevel;
+uint16_t ACpower::_Izerolevel = I_ZERO;
+uint16_t ACpower::_Uzerolevel = U_ZERO;
 
 volatile uint16_t ACpower::_angle;
 
-//volatile hw_timer_t* ACpower::timerADC;
-//volatile hw_timer_t* ACpower::timerTriac;
+volatile uint32_t ACpower::_msZCmillis;
+volatile bool ACpower::trOpened;
 
-
-// === Обработка прерывания по совпадению OCR1A (угла открытия) и счетчика TCNT1 
-// (который сбрасывается в "0" по zero_crosss_int) 
-
-// === Обработка прерывания по совпадению OCR1B для "гашения" триака 
-
-// === Обработка прерывания АЦП для сбора измеренных значений 
-
+#ifdef DEBUG2
+volatile uint32_t ACpower::ZCcore, ACpower::ADCcore, ACpower::TRIACcore;
+volatile uint16_t ACpower::ZCprio, ACpower::ADCprio, ACpower::TRIACprio;
+volatile uint32_t ACpower::CounterTRopen;
+volatile uint32_t ACpower::CounterTRclose;
+volatile uint64_t ACpower::TRIACtimerOpen, ACpower::TRIACtimerClose;
+#endif
 
 ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinCurrent)
 {
@@ -182,7 +182,7 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 	if ((millis() - _msZCmillis) > 5)
 	{
 		//xSemaphoreGiveFromISR(smphZC, NULL);
-		D(_usZCmicros = micros());
+		//D(_usZCmicros = micros());
 		
 		timerStop(ACpower::timerTriac);
 		digitalWrite(_pinTriac, LOW);
@@ -193,7 +193,7 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 		
 		if (_zero >= ADC_WAVES)
 		{
-			portENTER_CRITICAL_ISR((void *)&ACpower::muxADC);
+			portENTER_CRITICAL_ISR(&muxADC);
 			takeADC = false;
 			
 			if (getI)
@@ -218,14 +218,14 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 			_cntr = 0;
 			_zero = 0;
 			adcStart(_pin);
-			portEXIT_CRITICAL_ISR(&ACpower::muxADC);
+			portEXIT_CRITICAL_ISR(&muxADC);
 			xSemaphoreGiveFromISR(smphRMS, NULL);
 		}
 		timerWrite(timerTriac, _angle);
 		timerStart(timerTriac);
 		D(ZCcore = xPortGetCoreID());
 		D(ZCprio = uxTaskPriorityGet(NULL));
-		D(usZCduration = micros() - _usZCmicros);
+		//D(usZCduration = micros() - _usZCmicros);
 	}
 	return;
 }
@@ -242,7 +242,7 @@ void IRAM_ATTR ACpower::GetADC_int() //__attribute__((always_inline))
 		_summ += X2;
 		_cntr++;
 		adcStart(_pin);
-		D(if (getI) { if (Xnow > adcImax) adcImax = Xnow; } else { if (Xnow > adcUmax) adcUmax = Xnow; });
+		//D(if (getI) { if (Xnow > adcImax) adcImax = Xnow; } else { if (Xnow > adcUmax) adcUmax = Xnow; });
 	}
 	else if (_cntr == 0)
 	{
@@ -266,19 +266,19 @@ void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 		trOpened = true;
 		xSemaphoreGiveFromISR(smphTriac, NULL);
 
-		D(usZCtoTRIAC = micros() - _usZCmicros);
-		D(tmrOpen = _tmrTriacNow);
-		D(_usTRmicros = micros());
-		D(_cntrTRopen++);
+		//D(usZCtoTRIAC = micros() - _usZCmicros);
+		D(TRIACtimerOpen = _tmrTriacNow);
+		//D(_usTRmicros = micros());
+		D(CounterTRopen++);
 	}
 	else
 	{
 		digitalWrite(_pinTriac, LOW);
 		trOpened = false;
 
-		D(tmrClose = _tmrTriacNow);
-		D(usTRopen = micros() - _usTRmicros);
-		D(_cntrTRclose++);
+		D(TRIACtimerClose = _tmrTriacNow);
+		//D(usTRopen = micros() - _usTRmicros);
+		D(CounterTRclose++);
 	}
 	timerStop(timerTriac);
 	D(CounterTR++);
