@@ -28,20 +28,20 @@
 
 #if defined(ESP32)
 
-#define LIBVERSION "ACpower_v20190609 "
+#define LIBVERSION "ACpower_v20190610 "
 
 #define ZC_CRAZY		// если ZeroCross прерывание выполняется слишком часто :-(
 #define ZC_EDGE RISING	// FALLING, RISING
 
 #define ADC_RATE 200    // количество отсчетов АЦП на ПОЛУволну - 200 (для прерываний)
-#define WAVES 10        // количество обсчитываемых ПОЛУволн - 4
+#define ADC_WAVES 10    // количество обсчитываемых ПОЛУволн - 4
 #define ADC_NOISE 1000  // попробуем "понизить" шум АЦП
 
 #define U_ZERO 1931     //2113
 #define I_ZERO 1942     //1907
 #define U_RATIO 0.2
 #define I_RATIO 0.0129
-#define U_CORRECTION {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0.6,0.7,2.8,8.9,12,14.1,15.2,17.3,18.4}
+//#define U_CORRECTION {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0.6,0.7,2.8,8.9,12,14.1,15.2,17.3,18.4}
 
 #define PIN_U 39
 #define PIN_I 36
@@ -52,23 +52,33 @@
 #define ANGLE_MAX 10100		// максимальный угол открытия триака - определяет MAX возможную мощность
 #define ANGLE_DELTA 100		// запас по времени для открытия триака
 #define POWER_MAX 3500		// больше этой мощности установить не получится
+#define POWER_MIN 50		// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
+
+#define TIMER_TRIAC 0
+#define TIMER_ADC 1
+
+//#define DEBUG1
+//#define DEBUG2
 
 class ACpower
 {
 public:
-	ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712);
+	ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent);
 	
-	float Inow;   		// переменная расчета RMS тока
-	float Unow;   		// переменная расчета RMS напряжения
+	float Inow = 0;   		// переменная расчета RMS тока
+	float Unow = 0;   		// переменная расчета RMS напряжения
 
-	int Angle;
-	//uint16_t Pavg;
+	int16_t Angle = ANGLE_MIN;
 	uint16_t Pnow;
 	uint16_t Pset = 0;
 	uint16_t Pmax;
+	
+	volatile static uint32_t CounterZC;
+	volatile static uint32_t CounterTR;
+	uint32_t CounterRMS = 0;
 
 	void init(float Iratio, float Uratio);
-		
+	
 	void control();
 	void check();
 	void setpower(uint16_t setP);
@@ -79,56 +89,80 @@ public:
 	static void OpenTriac_int(); // __attribute__((always_inline));
 	//static void CloseTriac_int(); //__attribute__((always_inline));
 	// === test
-	#ifdef CALIBRATE_ZERO
+#ifdef DEBUG2
+	volatile static uint32_t ZCcore;
+	volatile static uint16_t ZCprio;
+	volatile static uint32_t ADCcore;
+	volatile static uint16_t ADCprio;
+	volatile static uint32_t TRIACcore;
+	volatile static uint16_t TRIACprio;
+	uint32_t RMScore;
+	uint16_t RMSprio;
+#endif
+
+#ifdef CALIBRATE_ZERO
 	int calibrate();
-	#endif
+#endif
 	
 protected:
-
-TaskHandle_t taskADC = NULL;
-TaskHandle_t taskUPD = NULL;
-hw_timer_t * timerADC = NULL;
-hw_timer_t * timerTriac = NULL;
-volatile SemaphoreHandle_t smphADC, smphZC;
-volatile SemaphoreHandle_t smphTriac;
-volatile SemaphoreHandle_t smphRMS, smI, smU;
-portMUX_TYPE muxTriac = portMUX_INITIALIZER_UNLOCKED;
-portMUX_TYPE muxADC = portMUX_INITIALIZER_UNLOCKED;
-
-volatile bool getI = true;
-volatile bool takeADC = false;
-volatile bool trOpened = false;
-volatile uint8_t _zero = 1;
-volatile uint8_t _pin = PIN_I;
-volatile int16_t Xnow;
-volatile uint32_t X2;
-
-volatile uint64_t _summ = 0;
-volatile uint64_t _I2summ = 0;
-volatile uint64_t _U2summ = 0;
-
-volatile uint32_t _cntr = 1;
-volatile uint32_t _Icntr = 1;
-volatile uint32_t _Ucntr = 1;
-
-volatile uint16_t _zerolevel = 0;
-volatile uint16_t _Izerolevel = 0;
-volatile uint16_t _Uzerolevel = 0;
-
-volatile uint32_t _msZCmillis = 0;
-volatile uint16_t _angle = 0; 
-volatile uint32_t _cntrZC = 0;
-volatile uint32_t _tmrTriacNow = 0;
-
-float Inow = 0, Unow = 0;
-int16_t Angle;
-uint16_t Pset = 0, Pnow = 0;
-
-
+	//TaskHandle_t taskADC = NULL;
+	//TaskHandle_t taskUPD = NULL;
+	void setup_ZeroCross();
+	void setup_Triac();
+	void setup_ADC();
 	
-	#ifdef CALIBRATE_ZERO
+	hw_timer_t* timerADC;
+	static hw_timer_t* timerTriac;
+	//volatile static SemaphoreHandle_t smphADC, smphZC;
+	volatile static SemaphoreHandle_t smphTriac;
+	volatile static SemaphoreHandle_t smphRMS;
+	//, smI, smU;
+	//portMUX_TYPE muxTriac = portMUX_INITIALIZER_UNLOCKED;
+	static portMUX_TYPE volatile muxADC;
+	//= portMUX_INITIALIZER_UNLOCKED;
+
+	volatile static bool getI;
+	volatile static bool takeADC;
+	volatile static bool trOpened;
+
+	volatile static uint8_t _zero;
+	
+	volatile static int16_t Xnow;
+	volatile static uint32_t X2;
+
+	volatile static uint8_t _pin;
+	volatile static uint8_t _pinI;
+	volatile static uint8_t _pinU;
+	volatile static uint8_t _pinTriac;
+	uint8_t _pinZCross;
+	
+	volatile static uint64_t _summ;
+	volatile static uint64_t _I2summ;
+	volatile static uint64_t _U2summ;
+
+	volatile static uint32_t _cntr;
+	volatile static uint32_t _Icntr;
+	volatile static uint32_t _Ucntr;
+
+	volatile static uint16_t _zerolevel;
+	volatile static uint16_t _Izerolevel;
+	volatile static uint16_t _Uzerolevel;
+
+	volatile static uint32_t _msZCmillis;
+
+	volatile static uint32_t _cntrZC;
+	//volatile static uint32_t _tmrTriacNow;
+
+	volatile static uint16_t _angle; 
+	
+#ifdef CALIBRATE_ZERO
 	volatile static int _zeroI;
-	#endif
+#endif
+
+#ifdef U_CORRECTION
+	//static const 
+	float Ucorr[25] = U_CORRECTION;
+#endif
 };
 
 #endif // ESP32
