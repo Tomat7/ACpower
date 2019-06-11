@@ -1,13 +1,14 @@
 /*
-	* Оригинальная идея и алгорим регулирования напряжения (c) Sebra
-	* Алгоритм регулирования тока (c) Chatterbox
-	* 
-	* Вольный перевод в библиотеку мелкие доработки алгоритма - Tomat7
+* Оригинальная идея (c) Sebra
+* Базовый алгоритм регулирования (c) Chatterbox
+* Алгоритм с привязкой расчетов к детектору нуля, поддержка ESP32 и перевод в библиотеку (c) Tomat7
 */
 
 #include "Arduino.h"
 #include "ACpower.h"
 // defines for setting and clearing register bits
+
+#if defined(__AVR__)
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -243,6 +244,8 @@ int ACpower::calibrate()
 	return zero;
 }
 #endif
+
+#endif // __AVR__
 
 /*
 	//===========================================================Настройка АЦП
