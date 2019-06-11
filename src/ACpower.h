@@ -1,10 +1,12 @@
 /*
 * Оригинальная идея (c) Sebra
-* Алгоритм регулирования (c) Chatterbox
-* 
-* Вольный перевод в библиотеку Tomat7
-* Version 0.7
-* 
+* Базовый алгоритм регулирования (c) Chatterbox
+* Алгоритм с привязкой расчетов к детектору нуля, поддержка ESP32 и перевод в библиотеку (c) Tomat7
+* Version 3.1 (ESP32 support added starting v3)
+* http://forum.homedistiller.ru/index.php?topic=166750.0
+* https://tomat.visualstudio.com/ESP32-AC-power
+
+* AVR pin connections (Arduino Nano/ProMini):
 * A0 - подключение "измерителя" напряжения (трансформатор, диодный мост, делитель напряжения)
 * A1 - подключение "выхода" датчика тока ACS712
 * D5 - управление триаком
@@ -13,7 +15,13 @@
 * детектор нуля может быть на D2 или D3
 * управление триаком почти на любом цифровом выходе порта D, то есть D2-D7
 * эти входы-выходы могут (или должны) задаваться при инициализации объекта ACpower
-*
+
+* ESP32 pin connections (ESP32 Wemos Lolin32):
+* 39 - Voltage meter (https://learn.openenergymonitor.org/electricity-monitoring/voltage-sensing/measuring-voltage-with-an-acac-power-adapter )
+* 36 - Current transformer (https://learn.openenergymonitor.org/electricity-monitoring/ct-sensors/interface-with-arduino )
+* 25 - ZeroCross detector ()
+* 26 - Triac ()
+
 *	ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712);
 	Pm - максимальная мощность. регулятор не позволит установить мощность больше чем MAXPOWER
 	pinZeroCross - номер пина к которому подключен детектор нуля (2 или 3)

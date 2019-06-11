@@ -1,27 +1,18 @@
 /*
 * Оригинальная идея (c) Sebra
-* Алгоритм регулирования (c) Chatterbox
-* 
-* Вольный перевод в библиотеку Tomat7
-* Version 0.7
-* 
-* A0 - подключение "измерителя" напряжения (трансформатор, диодный мост, делитель напряжения)
-* A1 - подключение "выхода" датчика тока ACS712
-* D5 - управление триаком
-* D3 - детектор нуля
-* это условный "стандарт", потому как все эти  входы-выходы можно менять
-* детектор нуля может быть на D2 или D3
-* управление триаком почти на любом цифровом выходе порта D, то есть D2-D7
-* эти входы-выходы могут (или должны) задаваться при инициализации объекта ACpower
-*
-*	ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinACS712);
-	Pm - максимальная мощность. регулятор не позволит установить мощность больше чем MAXPOWER
-	pinZeroCross - номер пина к которому подключен детектор нуля (2 или 3)
-	pinTriac - номер пина который управляет триаком (2-7)
-	pinVoltage - "имя" вывода к которому подключен "датчик напряжения" - трансформатор с обвязкой (A0-A7)
-	pinACS712 - "имя" вывода к которому подключен "датчик тока" - ACS712 (A0-A7)
+* Базовый алгоритм регулирования (c) Chatterbox
+* Алгоритм с привязкой расчетов к детектору нуля, поддержка ESP32 и перевод в библиотеку (c) Tomat7
+* Version 3.1 (ESP32 support added starting v3)
+* http://forum.homedistiller.ru/index.php?topic=166750.0
+* https://tomat.visualstudio.com/ESP32-AC-power
 *	
-* 	ACpower(uint16_t Pm) = ACpower(MAXPOWER, 3, 5, A0, A1) - так тоже можно
+* ESP32 pin connections (ESP32 Wemos Lolin32):
+* 39 - Voltage meter (https://learn.openenergymonitor.org/electricity-monitoring/voltage-sensing/measuring-voltage-with-an-acac-power-adapter )
+* 36 - Current transformer (https://learn.openenergymonitor.org/electricity-monitoring/ct-sensors/interface-with-arduino )
+* 25 - ZeroCross detector ()
+* 26 - Triac ()
+*
+* ACpower(uint16_t Pm) = ACpower(MAXPOWER, 25, 26, 39, 36)
 */
 #ifndef ACpower_esp32_h
 #define ACpower_esp32_h
@@ -39,8 +30,8 @@
 
 #define U_ZERO 1931     //2113
 #define I_ZERO 1942     //1907
-#define U_RATIO 0.2
-#define I_RATIO 0.0129
+//#define U_RATIO 0.2
+//#define I_RATIO 0.0129
 //#define U_CORRECTION {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0.6,0.7,2.8,8.9,12,14.1,15.2,17.3,18.4}
 
 #define PIN_U 39
