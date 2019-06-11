@@ -68,7 +68,7 @@ public:
 	float Inow = 0;   		// переменная расчета RMS тока
 	float Unow = 0;   		// переменная расчета RMS напряжения
 
-	int16_t Angle = ANGLE_MIN;
+	int16_t Angle = 0;
 	uint16_t Pnow;
 	uint16_t Pset = 0;
 	uint16_t Pmax;
@@ -113,13 +113,16 @@ protected:
 	void setup_Triac();
 	void setup_ADC();
 	
+	float _Uratio;
+	float _Iratio;
+	
 	hw_timer_t* timerADC = NULL;
 	static hw_timer_t* timerTriac;
-	volatile static SemaphoreHandle_t smphTriac;
 	volatile static SemaphoreHandle_t smphRMS;
-	//portMUX_TYPE muxTriac = portMUX_INITIALIZER_UNLOCKED;
 	static portMUX_TYPE muxADC;
-
+	//volatile static SemaphoreHandle_t smphTriac;
+	//portMUX_TYPE muxTriac = portMUX_INITIALIZER_UNLOCKED;
+	
 	volatile static bool getI;
 	volatile static bool takeADC;
 
@@ -143,7 +146,7 @@ protected:
 	static uint16_t _Uzerolevel;
 
 	volatile static uint32_t _msZCmillis;
-    volatile static bool trOpened;
+    //volatile static bool trOpened;
 
 	//volatile static uint32_t _cntrZC;
 	//volatile static uint32_t _tmrTriacNow;

@@ -33,7 +33,7 @@
 #define D(a)
 #endif
 
-volatile SemaphoreHandle_t ACpower::smphTriac;
+//volatile SemaphoreHandle_t ACpower::smphTriac;
 volatile SemaphoreHandle_t ACpower::smphRMS;
 portMUX_TYPE ACpower::muxADC = portMUX_INITIALIZER_UNLOCKED;
 hw_timer_t *ACpower::timerTriac = NULL;
@@ -68,7 +68,10 @@ uint16_t ACpower::_Uzerolevel = U_ZERO;
 volatile uint16_t ACpower::_angle;
 
 volatile uint32_t ACpower::_msZCmillis;
-volatile bool ACpower::trOpened;
+//volatile bool ACpower::trOpened;
+
+//float _Uratio;
+//float _Iratio;
 
 #ifdef DEBUG2
 volatile uint32_t ACpower::ZCcore, ACpower::ADCcore, ACpower::TRIACcore;
@@ -91,20 +94,25 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 
 void ACpower::init(float Iratio, float Uratio)
 {  
+	_Iratio = Iratio;
+	_Uratio = Uratio;
+	DELAYx;
 	setup_Triac();
+	DELAYx;
 	setup_ZeroCross();
+	DELAYx;
 	setup_ADC();
+	DELAYx;
 	return;
 }
 
 void ACpower::setup_Triac()
 {
-	DELAYx;
 	pinMode(_pinTriac, OUTPUT);
 	_angle = 0; // MAX_OFFSET;
 	//smphTriac = xSemaphoreCreateBinary();
 	timerTriac = timerBegin(TIMER_TRIAC, 80, true);
-	timerAttachInterrupt(timerTriac, &ACpower::OpenTriac_int, true);
+	timerAttachInterrupt(timerTriac, &OpenTriac_int, true);
 	timerAlarmWrite(timerTriac, (ANGLE_MAX + ANGLE_DELTA), true);
 	timerAlarmEnable(timerTriac);
 	timerWrite(timerTriac, _angle);
@@ -114,25 +122,23 @@ void ACpower::setup_Triac()
 
 void ACpower::setup_ZeroCross()
 {
-	DELAYx;
 	takeADC = false;
 	_msZCmillis = millis();
 	smphRMS = xSemaphoreCreateBinary();
 	//smphZC = xSemaphoreCreateBinary();
 	pinMode(_pinZCross, INPUT_PULLUP);
-	attachInterrupt(digitalPinToInterrupt(_pinZCross), ACpower::ZeroCross_int, ZC_EDGE);
+	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, ZC_EDGE);
 	PRINTLN("+ ZeroCross setup OK");
 	return;
 }
 
 void ACpower::setup_ADC()
 {
-	DELAYx;
 	uint16_t usADCinterval = (uint16_t)(10000 / ADC_RATE);
 	uint16_t ADCperSet = ADC_RATE * ADC_WAVES;
 	//smphADC = xSemaphoreCreateBinary();
 	timerADC = timerBegin(TIMER_ADC, 80, true);
-	timerAttachInterrupt(timerADC, &ACpower::GetADC_int, true);
+	timerAttachInterrupt(timerADC, &GetADC_int, true);
 	timerAlarmWrite(timerADC, usADCinterval, true);
 	timerAlarmEnable(timerADC);
 	PRINTLN("+ ADC Inerrupt setup OK");
@@ -148,8 +154,8 @@ void ACpower::control()
 	if (xSemaphoreTake(smphRMS, 0) == pdTRUE)
 	{ 
 		CounterRMS++;
-		if (getI) Unow = sqrt(_U2summ / _Ucntr) * U_RATIO;
-		else Inow = sqrt(_I2summ / _Icntr) * I_RATIO;
+		if (getI) Unow = sqrt(_U2summ / _Ucntr) * _Uratio;
+		else Inow = sqrt(_I2summ / _Icntr) * _Iratio;
 		
 		#ifdef U_CORRECTION
 		if ((getI) && (rmsCalibrated) && (Unow < 240))
@@ -186,9 +192,9 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 		//xSemaphoreGiveFromISR(smphZC, NULL);
 		//D(_usZCmicros = micros());
 		
-		timerStop(ACpower::timerTriac);
+		timerStop(timerTriac);
 		digitalWrite(_pinTriac, LOW);
-		trOpened = false;
+		//trOpened = false;
 		_msZCmillis = millis();
 		_zero++;
 		CounterZC++;
@@ -234,7 +240,7 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 
 void IRAM_ATTR ACpower::GetADC_int() //__attribute__((always_inline))
 {
-	portENTER_CRITICAL_ISR(&ACpower::muxADC);
+	portENTER_CRITICAL_ISR(&muxADC);
 	
 	if (takeADC)
 	{
@@ -265,8 +271,8 @@ void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 	if ((_tmrTriacNow > ANGLE_MIN) && (_tmrTriacNow < ANGLE_MAX))
 	{
 		digitalWrite(_pinTriac, HIGH);
-		trOpened = true;
-		xSemaphoreGiveFromISR(smphTriac, NULL);
+		//trOpened = true;
+		//xSemaphoreGiveFromISR(smphTriac, NULL);
 
 		//D(usZCtoTRIAC = micros() - _usZCmicros);
 		D(TRIACtimerOpen = _tmrTriacNow);
@@ -276,7 +282,7 @@ void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 	else
 	{
 		digitalWrite(_pinTriac, LOW);
-		trOpened = false;
+		//trOpened = false;
 
 		D(TRIACtimerClose = _tmrTriacNow);
 		//D(usTRopen = micros() - _usTRmicros);
