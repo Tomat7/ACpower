@@ -30,8 +30,7 @@
 
 #define U_ZERO 1931     //2113
 #define I_ZERO 1942     //1907
-//#define U_RATIO 0.2
-//#define I_RATIO 0.0129
+
 //#define U_CORRECTION {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0.6,0.7,2.8,8.9,12,14.1,15.2,17.3,18.4}
 
 #define PIN_U 39
@@ -55,6 +54,7 @@ class ACpower
 {
 public:
 	ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent);
+	ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent, bool ShowLog);
 	
 	float Inow = 0;   		// переменная расчета RMS тока
 	float Unow = 0;   		// переменная расчета RMS напряжения
@@ -80,9 +80,9 @@ public:
 	void printConfig();
 	void calibrate();
 	//=== Прерывания
-	static void ZeroCross_int(); // __attribute__((always_inline));
-	static void GetADC_int(); // __attribute__((always_inline));
-	static void OpenTriac_int(); // __attribute__((always_inline));
+	static void ZeroCross_int();
+	static void GetADC_int();
+	static void OpenTriac_int(); 
 	//static void CloseTriac_int(); //__attribute__((always_inline));
 	// === test
 #ifdef DEBUG2
@@ -101,19 +101,18 @@ public:
 
 
 protected:
-	void setup_ZeroCross(bool PrintCfg);
-	void setup_Triac(bool PrintCfg);
-	void setup_ADC(bool PrintCfg);
+	void setup_ZeroCross();
+	void setup_Triac();
+	void setup_ADC();
 	
 	float _Uratio;
 	float _Iratio;
+	bool _ShowLog;
 	
 	hw_timer_t* timerADC = NULL;
 	static hw_timer_t* timerTriac;
 	volatile static SemaphoreHandle_t smphRMS;
 	static portMUX_TYPE muxADC;
-	//volatile static SemaphoreHandle_t smphTriac;
-	//portMUX_TYPE muxTriac = portMUX_INITIALIZER_UNLOCKED;
 	
 	volatile static bool getI;
 	volatile static bool takeADC;
@@ -124,7 +123,8 @@ protected:
 	static uint8_t _pinU;
 	static uint8_t _pinTriac;
 	uint8_t _pinZCross;
-	
+
+	volatile static uint16_t _angle; 
 	volatile static uint64_t _summ;
 	volatile static uint64_t _I2summ;
 	volatile static uint64_t _U2summ;
@@ -140,17 +140,7 @@ protected:
 	volatile static uint32_t _msZCmillis;
     //volatile static bool trOpened;
 
-	//volatile static uint32_t _cntrZC;
-	//volatile static uint32_t _tmrTriacNow;
-
-	volatile static uint16_t _angle; 
-	
-#ifdef CALIBRATE_ZERO
-	volatile static int _zeroI;
-#endif
-
 #ifdef U_CORRECTION
-	//static const 
 	float Ucorr[25] = U_CORRECTION;
 #endif
 };

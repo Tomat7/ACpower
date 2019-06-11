@@ -32,14 +32,14 @@
 #define D(a)
 #endif
 
-//volatile SemaphoreHandle_t ACpower::smphTriac;
-volatile SemaphoreHandle_t ACpower::smphRMS;
 portMUX_TYPE ACpower::muxADC = portMUX_INITIALIZER_UNLOCKED;
 hw_timer_t *ACpower::timerTriac = NULL;
+volatile SemaphoreHandle_t ACpower::smphRMS;
 
 volatile bool ACpower::getI = true;
 volatile bool ACpower::takeADC = false;
 
+volatile uint16_t ACpower::_angle;
 volatile int16_t ACpower::Xnow;
 volatile uint32_t ACpower::X2;
 
@@ -64,13 +64,8 @@ volatile uint16_t ACpower::_zerolevel = 0;
 uint16_t ACpower::_Izerolevel = I_ZERO;
 uint16_t ACpower::_Uzerolevel = U_ZERO;
 
-volatile uint16_t ACpower::_angle;
-
 volatile uint32_t ACpower::_msZCmillis;
 //volatile bool ACpower::trOpened;
-
-//float _Uratio;
-//float _Iratio;
 
 #ifdef DEBUG2
 volatile uint32_t ACpower::ZCcore, ACpower::ADCcore, ACpower::TRIACcore;
@@ -88,57 +83,63 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_pinU = pinVoltage;		// аналоговый пин к которому подключен модуль измерения напряжения
 	_pinI = pinCurrent;		// аналоговый пин к которому подключен датчик ACS712 или траснформатор тока
 	_pin = _pinI;
+	_ShowLog = true;
 	return;
 }
+
+ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinCurrent, bool ShowLog)
+{
+	Pmax = Pm;
+	_pinZCross = pinZeroCross;	// пин подключения детектора нуля.
+	_pinTriac = pinTriac;		// пин управляющий триаком. 
+	_pinU = pinVoltage;		// аналоговый пин к которому подключен модуль измерения напряжения
+	_pinI = pinCurrent;		// аналоговый пин к которому подключен датчик ACS712 или траснформатор тока
+	_pin = _pinI;
+	_ShowLog = ShowLog;
+	return;
+}
+
 
 void ACpower::init(float Iratio, float Uratio)
 {  
-	init(Iratio, Uratio, true);
-	return;
-}
-
-
-void ACpower::init(float Iratio, float Uratio, bool PrintCfg)
-{  
 	_Iratio = Iratio;
 	_Uratio = Uratio;
+	if (_ShowLog) printConfig();
 	DELAYx;
-	setup_Triac(PrintCfg);
+	setup_Triac();
 	DELAYx;
-	setup_ZeroCross(PrintCfg);
+	setup_ZeroCross();
 	DELAYx;
-	setup_ADC(PrintCfg);
+	setup_ADC();
 	DELAYx;
 	return;
 }
 
-void ACpower::setup_Triac(bool PrintCfg)
+void ACpower::setup_Triac()
 {
 	pinMode(_pinTriac, OUTPUT);
-	_angle = 0; // MAX_OFFSET;
-	//smphTriac = xSemaphoreCreateBinary();
+	_angle = 0;
 	timerTriac = timerBegin(TIMER_TRIAC, 80, true);
 	timerAttachInterrupt(timerTriac, &OpenTriac_int, true);
 	timerAlarmWrite(timerTriac, (ANGLE_MAX + ANGLE_DELTA), true);
 	timerAlarmEnable(timerTriac);
 	timerWrite(timerTriac, _angle);
-	if (PrintCfg) PRINTLN("+ TRIAC setup OK");
+	if (_ShowLog) PRINTLN("+ TRIAC setup OK");
 	return;
 }
 
-void ACpower::setup_ZeroCross(bool PrintCfg)
+void ACpower::setup_ZeroCross()
 {
 	takeADC = false;
 	_msZCmillis = millis();
 	smphRMS = xSemaphoreCreateBinary();
-	//smphZC = xSemaphoreCreateBinary();
 	pinMode(_pinZCross, INPUT_PULLUP);
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, ZC_EDGE);
-	if (PrintCfg) PRINTLN("+ ZeroCross setup OK");
+	if (_ShowLog) PRINTLN("+ ZeroCross setup OK");
 	return;
 }
 
-void ACpower::setup_ADC(bool PrintCfg)
+void ACpower::setup_ADC()
 {
 	uint16_t usADCinterval = (uint16_t)(10000 / ADC_RATE);
 	uint16_t ADCperSet = ADC_RATE * ADC_WAVES;
@@ -146,7 +147,7 @@ void ACpower::setup_ADC(bool PrintCfg)
 	timerAttachInterrupt(timerADC, &GetADC_int, true);
 	timerAlarmWrite(timerADC, usADCinterval, true);
 	timerAlarmEnable(timerADC);
-	if (PrintCfg) 
+	if (_ShowLog) 
 	{
 		PRINTLN("+ ADC Inerrupt setup OK");
 		PRINTF(".  ADC microSeconds between samples: ", usADCinterval);
@@ -197,9 +198,6 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 	
 	if ((millis() - _msZCmillis) > 5)
 	{
-		//xSemaphoreGiveFromISR(smphZC, NULL);
-		//D(_usZCmicros = micros());
-		
 		timerStop(timerTriac);
 		digitalWrite(_pinTriac, LOW);
 		//trOpened = false;
@@ -258,7 +256,6 @@ void IRAM_ATTR ACpower::GetADC_int() //__attribute__((always_inline))
 		_summ += X2;
 		_cntr++;
 		adcStart(_pin);
-		//D(if (getI) { if (Xnow > adcImax) adcImax = Xnow; } else { if (Xnow > adcUmax) adcUmax = Xnow; });
 	}
 	else if (_cntr == 0)
 	{
@@ -266,10 +263,10 @@ void IRAM_ATTR ACpower::GetADC_int() //__attribute__((always_inline))
 		takeADC = true;
 		adcStart(_pin);
 	}
-	D(ADCcore = xPortGetCoreID());
-	D(ADCprio = uxTaskPriorityGet(NULL));
 	
 	portEXIT_CRITICAL_ISR(&ACpower::muxADC);
+	D(ADCcore = xPortGetCoreID());
+	D(ADCprio = uxTaskPriorityGet(NULL));
 	return;
 }
 
@@ -280,21 +277,15 @@ void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 	{
 		digitalWrite(_pinTriac, HIGH);
 		//trOpened = true;
-		//xSemaphoreGiveFromISR(smphTriac, NULL);
-
-		//D(usZCtoTRIAC = micros() - _usZCmicros);
-		D(TRIACtimerOpen = _tmrTriacNow);
-		//D(_usTRmicros = micros());
 		D(CounterTRopen++);
+		D(TRIACtimerOpen = _tmrTriacNow);
 	}
 	else
 	{
 		digitalWrite(_pinTriac, LOW);
 		//trOpened = false;
-
-		D(TRIACtimerClose = _tmrTriacNow);
-		//D(usTRopen = micros() - _usTRmicros);
 		D(CounterTRclose++);
+		D(TRIACtimerClose = _tmrTriacNow);
 	}
 	timerStop(timerTriac);
 	D(CounterTR++);
@@ -302,20 +293,19 @@ void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 	D(TRIACprio = uxTaskPriorityGet(NULL));
 }
 
-
 void ACpower::printConfig()
 {
-	Serial.print(F(LIBVERSION));
-	//Serial.print(_zeroI);
-	Serial.print(F(", U-meter on A"));
+	Serial.println(F(LIBVERSION));
+	Serial.print(F(".  ZeroCross on pin "));
+	Serial.print(_pinZCross);
+	Serial.print(F(", Triac on pin "));
+	Serial.println(_pinTriac);
+	Serial.print(F(".  U-meter on pin "));
 	Serial.print(_pinU);
-	Serial.print(F(", I-meter on A"));
+	Serial.print(F(", I-meter on pin "));
 	Serial.println(_pinI);
 }
 
-#ifdef CALIBRATE_ZERO
-
-#endif
 
 void ACpower::setpower(uint16_t setPower)
 {	
@@ -330,6 +320,5 @@ void ACpower::check()
 {
 	control();
 }
-
 
 #endif // ESP32
