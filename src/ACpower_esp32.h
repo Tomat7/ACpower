@@ -72,6 +72,7 @@ public:
 	volatile static uint32_t X2;
 	
 	void init(float Iratio, float Uratio);
+	void init(float Iratio, float Uratio, bool PrintCfg);
 	
 	void control();
 	void check();
@@ -100,9 +101,9 @@ public:
 
 
 protected:
-	void setup_ZeroCross();
-	void setup_Triac();
-	void setup_ADC();
+	void setup_ZeroCross(bool PrintCfg);
+	void setup_Triac(bool PrintCfg);
+	void setup_ADC(bool PrintCfg);
 	
 	float _Uratio;
 	float _Iratio;

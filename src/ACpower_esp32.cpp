@@ -93,19 +93,26 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 
 void ACpower::init(float Iratio, float Uratio)
 {  
+	init(Iratio, Uratio, true);
+	return;
+}
+
+
+void ACpower::init(float Iratio, float Uratio, bool PrintCfg)
+{  
 	_Iratio = Iratio;
 	_Uratio = Uratio;
 	DELAYx;
-	setup_Triac();
+	setup_Triac(PrintCfg);
 	DELAYx;
-	setup_ZeroCross();
+	setup_ZeroCross(PrintCfg);
 	DELAYx;
-	setup_ADC();
+	setup_ADC(PrintCfg);
 	DELAYx;
 	return;
 }
 
-void ACpower::setup_Triac()
+void ACpower::setup_Triac(bool PrintCfg)
 {
 	pinMode(_pinTriac, OUTPUT);
 	_angle = 0; // MAX_OFFSET;
@@ -115,11 +122,11 @@ void ACpower::setup_Triac()
 	timerAlarmWrite(timerTriac, (ANGLE_MAX + ANGLE_DELTA), true);
 	timerAlarmEnable(timerTriac);
 	timerWrite(timerTriac, _angle);
-	PRINTLN("+ TRIAC setup OK");
+	if (PrintCfg) PRINTLN("+ TRIAC setup OK");
 	return;
 }
 
-void ACpower::setup_ZeroCross()
+void ACpower::setup_ZeroCross(bool PrintCfg)
 {
 	takeADC = false;
 	_msZCmillis = millis();
@@ -127,24 +134,26 @@ void ACpower::setup_ZeroCross()
 	//smphZC = xSemaphoreCreateBinary();
 	pinMode(_pinZCross, INPUT_PULLUP);
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, ZC_EDGE);
-	PRINTLN("+ ZeroCross setup OK");
+	if (PrintCfg) PRINTLN("+ ZeroCross setup OK");
 	return;
 }
 
-void ACpower::setup_ADC()
+void ACpower::setup_ADC(bool PrintCfg)
 {
 	uint16_t usADCinterval = (uint16_t)(10000 / ADC_RATE);
 	uint16_t ADCperSet = ADC_RATE * ADC_WAVES;
-	//smphADC = xSemaphoreCreateBinary();
 	timerADC = timerBegin(TIMER_ADC, 80, true);
 	timerAttachInterrupt(timerADC, &GetADC_int, true);
 	timerAlarmWrite(timerADC, usADCinterval, true);
 	timerAlarmEnable(timerADC);
-	PRINTLN("+ ADC Inerrupt setup OK");
-	PRINTF(". ADC microSeconds between samples: ", usADCinterval);
-	PRINTF(". ADC samples per half-wave: ", ADC_RATE);
-	PRINTF(". ADC samples per calculation set: ", ADCperSet);
-	PRINTF(". ADC half-waves per calculation set: ", ADC_WAVES);
+	if (PrintCfg) 
+	{
+		PRINTLN("+ ADC Inerrupt setup OK");
+		PRINTF(".  ADC microSeconds between samples: ", usADCinterval);
+		PRINTF(".  ADC samples per half-wave: ", ADC_RATE);
+		PRINTF(".  ADC samples per calculation set: ", ADCperSet);
+		PRINTF(".  ADC half-waves per calculation set: ", ADC_WAVES);
+	}
 	return;
 }
 
@@ -293,7 +302,7 @@ void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 	D(TRIACprio = uxTaskPriorityGet(NULL));
 }
 
-	
+
 void ACpower::printConfig()
 {
 	Serial.print(F(LIBVERSION));
