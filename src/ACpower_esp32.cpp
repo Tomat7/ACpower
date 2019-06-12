@@ -61,8 +61,8 @@ volatile uint64_t ACpower::_I2summ = 0;
 volatile uint64_t ACpower::_U2summ = 0;
 
 volatile uint16_t ACpower::_zerolevel = 0;
-uint16_t ACpower::_Izerolevel = I_ZERO;
-uint16_t ACpower::_Uzerolevel = U_ZERO;
+uint16_t ACpower::_Izerolevel = 0;
+uint16_t ACpower::_Uzerolevel = 0;
 
 volatile uint32_t ACpower::_msZCmillis;
 //volatile bool ACpower::trOpened;
@@ -99,8 +99,13 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	return;
 }
 
-
 void ACpower::init(float Iratio, float Uratio)
+{  
+	init(Iratio, Uratio, true);
+	return;
+}
+
+void ACpower::init(float Iratio, float Uratio, bool NeedCalibrate)
 {  
 	_Iratio = Iratio;
 	_Uratio = Uratio;
@@ -110,6 +115,7 @@ void ACpower::init(float Iratio, float Uratio)
 	DELAYx;
 	setup_ZeroCross();
 	DELAYx;
+	if (NeedCalibrate) calibrate();
 	setup_ADC();
 	DELAYx;
 	return;
@@ -118,13 +124,14 @@ void ACpower::init(float Iratio, float Uratio)
 void ACpower::setup_Triac()
 {
 	pinMode(_pinTriac, OUTPUT);
+	digitalWrite(_pinTriac, LOW);
 	_angle = 0;
 	timerTriac = timerBegin(TIMER_TRIAC, 80, true);
 	timerAttachInterrupt(timerTriac, &OpenTriac_int, true);
 	timerAlarmWrite(timerTriac, (ANGLE_MAX + ANGLE_DELTA), true);
 	timerAlarmEnable(timerTriac);
 	timerWrite(timerTriac, _angle);
-	if (_ShowLog) PRINTLN("+ TRIAC setup OK");
+	if (_ShowLog) PRINTLN(" + TRIAC setup OK");
 	return;
 }
 
@@ -135,7 +142,7 @@ void ACpower::setup_ZeroCross()
 	smphRMS = xSemaphoreCreateBinary();
 	pinMode(_pinZCross, INPUT_PULLUP);
 	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, ZC_EDGE);
-	if (_ShowLog) PRINTLN("+ ZeroCross setup OK");
+	if (_ShowLog) PRINTLN(" + ZeroCross setup OK");
 	return;
 }
 
@@ -149,11 +156,11 @@ void ACpower::setup_ADC()
 	timerAlarmEnable(timerADC);
 	if (_ShowLog) 
 	{
-		PRINTLN("+ ADC Inerrupt setup OK");
-		PRINTF(".  ADC microSeconds between samples: ", usADCinterval);
-		PRINTF(".  ADC samples per half-wave: ", ADC_RATE);
-		PRINTF(".  ADC samples per calculation set: ", ADCperSet);
-		PRINTF(".  ADC half-waves per calculation set: ", ADC_WAVES);
+		PRINTLN(" + ADC Inerrupt setup OK");
+		PRINTF(" . ADC microSeconds between samples: ", usADCinterval);
+		PRINTF(" . ADC samples per half-wave: ", ADC_RATE);
+		PRINTF(" . ADC samples per calculation set: ", ADCperSet);
+		PRINTF(" . ADC half-waves per calculation set: ", ADC_WAVES);
 	}
 	return;
 }
@@ -296,14 +303,49 @@ void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 void ACpower::printConfig()
 {
 	Serial.println(F(LIBVERSION));
-	Serial.print(F(".  ZeroCross on pin "));
+	Serial.print(F(" . ZeroCross on pin "));
 	Serial.print(_pinZCross);
 	Serial.print(F(", Triac on pin "));
 	Serial.println(_pinTriac);
-	Serial.print(F(".  U-meter on pin "));
+	Serial.print(F(" . U-meter on pin "));
 	Serial.print(_pinU);
 	Serial.print(F(", I-meter on pin "));
 	Serial.println(_pinI);
+}
+
+
+void ACpower::calibrate()
+{
+	while (1) 
+	{
+	PRINTLN(" + RMS calculating ZERO-shift for U and I...");
+	_angle = 0;
+	_Izerolevel = get_ZeroLevel(_pinI);
+	_Uzerolevel = get_ZeroLevel(_pinU);
+	
+	if (_ShowLog)
+	{
+		PRINTF(" . RMS ZeroLevel U: ", _Uzerolevel);
+		PRINTF(" . RMS ZeroLevel I: ", _Izerolevel);
+	}
+	}
+	return;
+}
+
+uint16_t ACpower::get_ZeroLevel(uint8_t zpin)
+{
+	uint32_t ZeroShift = 0;
+	adcAttachPin(zpin);
+	DELAYx;
+	adcStart(zpin);
+	for (int i = 0; i < SHIFT_TRY; i++) 
+	{
+		ZeroShift += adcEnd(zpin);
+		adcStart(zpin);
+		delayMicroseconds(50);
+	}
+	adcEnd(zpin);
+	return (uint16_t)(ZeroShift / SHIFT_TRY);
 }
 
 
@@ -314,7 +356,6 @@ void ACpower::setpower(uint16_t setPower)
 	else Pset = setPower;
 	return;
 }
-
 
 void ACpower::check()
 {

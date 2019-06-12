@@ -49,9 +49,9 @@
 #define WAVE_COUNT 4  		// сколько полуволн (half-wave) собирать/считать ток и напряжение
 
 //#define CALIBRATE_ZERO  // выполнять процедуру калибровки ноля датчика тока
-#ifndef CALIBRATE_ZERO
-#define _zeroI 512
-#endif
+//#ifndef CALIBRATE_ZERO
+//#define _zeroI 512
+//#endif
 
 //#define U_RATIO 0.2857	// множитель напряжения - теперь он в public и задается при создании объекта
 							// при Uratio=1 подсчет напряжения идет как и раньше - АЦП выдает значение "прямо" в вольтах
@@ -96,9 +96,7 @@ public:
 	static void OpenTriac_int(); // __attribute__((always_inline));
 	static void CloseTriac_int(); //__attribute__((always_inline));
 	// === test
-	#ifdef CALIBRATE_ZERO
-	int calibrate();
-	#endif
+	void calibrate();
 	
 protected:
 	
@@ -125,9 +123,8 @@ protected:
 	byte _pinI;
 	byte _pinU;
 	
-	#ifdef CALIBRATE_ZERO
 	volatile static int _zeroI;
-	#endif
+
 };
 
 #elif defined(ESP32)

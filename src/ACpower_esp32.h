@@ -46,6 +46,7 @@
 
 #define TIMER_TRIAC 0
 #define TIMER_ADC 1
+#define SHIFT_TRY 10000
 
 #define DEBUG1
 #define DEBUG2
@@ -72,7 +73,7 @@ public:
 	volatile static uint32_t X2;
 	
 	void init(float Iratio, float Uratio);
-	void init(float Iratio, float Uratio, bool PrintCfg);
+	void init(float Iratio, float Uratio, bool NeedCalibrate);
 	
 	void control();
 	void check();
@@ -104,6 +105,7 @@ protected:
 	void setup_ZeroCross();
 	void setup_Triac();
 	void setup_ADC();
+	uint16_t get_ZeroLevel(uint8_t zpin);
 	
 	float _Uratio;
 	float _Iratio;
