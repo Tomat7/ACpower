@@ -34,6 +34,7 @@ ACpower TEH(MAXPOWER, PIN_ZEROCROSS, PIN_TRIAC, PIN_U, PIN_I);
 */
 
 #include <WiFi.h>
+
 #ifndef USE_DHCP
 IPAddress local_IP(ETHERNET_IP);
 IPAddress gateway(IP_NETWORK + 254);
@@ -65,7 +66,7 @@ void setup()
     вторым параметром идет множитель для напряжения - полезно если невозможно откалибровать подстроечником
     и при изменении схемы позволяет использовать почти весь диапазон АЦП Ардуино
   */
-  TEH.init(0.0129, 0.2);      // трансформатора тока, датчик напряжения с выпрямителем
+  TEH.init(0.0129, 0.3);      // трансформатора тока, датчик напряжения с выпрямителем
   
   delay(3000);
 }
@@ -92,8 +93,13 @@ void showInfo()
   Serial.println(TEH.Unow);
   Serial.print("Inow=");
   Serial.println(TEH.Inow);
-  Serial.print("+++");
-  Serial.println(millis());
+
+  int sec = millis() / 1000;
+  int min = sec / 60;
+  int hr = min / 60;
+  char UpTimeStr[20];
+  snprintf(UpTimeStr, 50, "+ Uptime: %02d:%02d:%02d", hr, min % 60, sec % 60);
+  Serial.println(UpTimeStr);
 }
 
 void chkSerial()

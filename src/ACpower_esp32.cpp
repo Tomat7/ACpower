@@ -200,6 +200,66 @@ void ACpower::control()
 }
 
 
+void ACpower::calibrate()
+{
+	PRINTLN(" + RMS calculating ZERO-shift for U and I...");
+	_angle = 0;
+	_Izerolevel = get_ZeroLevel(_pinI);
+	_Uzerolevel = get_ZeroLevel(_pinU);
+	if (_ShowLog)
+	{
+		PRINTF(" . RMS ZeroLevel U: ", _Uzerolevel);
+		PRINTF(" . RMS ZeroLevel I: ", _Izerolevel);
+	}
+	return;
+}
+
+uint16_t ACpower::get_ZeroLevel(uint8_t zpin)
+{
+	uint32_t ZeroShift = 0;
+	adcAttachPin(zpin);
+	DELAYx;
+	adcStart(zpin);
+	for (int i = 0; i < SHIFT_TRY; i++) 
+	{
+		ZeroShift += adcEnd(zpin);
+		adcStart(zpin);
+		delayMicroseconds(50);
+	}
+	adcEnd(zpin);
+	return (uint16_t)(ZeroShift / SHIFT_TRY);
+}
+
+
+void ACpower::setpower(uint16_t setPower)
+{	
+	if (setPower > Pmax) Pset = Pmax;
+	else if (setPower < POWER_MIN) Pset = 0;
+	else Pset = setPower;
+	return;
+}
+
+
+void ACpower::printConfig()
+{
+	Serial.println(F(LIBVERSION));
+	Serial.print(F(" . ZeroCross on pin "));
+	Serial.print(_pinZCross);
+	Serial.print(F(", Triac on pin "));
+	Serial.println(_pinTriac);
+	Serial.print(F(" . U-meter on pin "));
+	Serial.print(_pinU);
+	Serial.print(F(", I-meter on pin "));
+	Serial.println(_pinI);
+}
+
+
+void ACpower::check()
+{
+	control();
+}
+
+
 void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
 	
@@ -300,66 +360,5 @@ void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 	D(TRIACprio = uxTaskPriorityGet(NULL));
 }
 
-void ACpower::printConfig()
-{
-	Serial.println(F(LIBVERSION));
-	Serial.print(F(" . ZeroCross on pin "));
-	Serial.print(_pinZCross);
-	Serial.print(F(", Triac on pin "));
-	Serial.println(_pinTriac);
-	Serial.print(F(" . U-meter on pin "));
-	Serial.print(_pinU);
-	Serial.print(F(", I-meter on pin "));
-	Serial.println(_pinI);
-}
-
-
-void ACpower::calibrate()
-{
-	while (1) 
-	{
-	PRINTLN(" + RMS calculating ZERO-shift for U and I...");
-	_angle = 0;
-	_Izerolevel = get_ZeroLevel(_pinI);
-	_Uzerolevel = get_ZeroLevel(_pinU);
-	
-	if (_ShowLog)
-	{
-		PRINTF(" . RMS ZeroLevel U: ", _Uzerolevel);
-		PRINTF(" . RMS ZeroLevel I: ", _Izerolevel);
-	}
-	}
-	return;
-}
-
-uint16_t ACpower::get_ZeroLevel(uint8_t zpin)
-{
-	uint32_t ZeroShift = 0;
-	adcAttachPin(zpin);
-	DELAYx;
-	adcStart(zpin);
-	for (int i = 0; i < SHIFT_TRY; i++) 
-	{
-		ZeroShift += adcEnd(zpin);
-		adcStart(zpin);
-		delayMicroseconds(50);
-	}
-	adcEnd(zpin);
-	return (uint16_t)(ZeroShift / SHIFT_TRY);
-}
-
-
-void ACpower::setpower(uint16_t setPower)
-{	
-	if (setPower > Pmax) Pset = Pmax;
-	else if (setPower < POWER_MIN) Pset = 0;
-	else Pset = setPower;
-	return;
-}
-
-void ACpower::check()
-{
-	control();
-}
 
 #endif // ESP32
