@@ -31,7 +31,8 @@
 #define U_ZERO 1931     //2113
 #define I_ZERO 1942     //1907
 
-//#define U_CORRECTION {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0.6,0.7,2.8,8.9,12,14.1,15.2,17.3,18.4}
+#define RMS_ADJUSTMENT
+//{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0.6,0.7,2.8,8.9,12,14.1,15.2,17.3,18.4}
 
 #define PIN_U 39
 #define PIN_I 36
@@ -83,6 +84,7 @@ public:
 	void printConfig();
 	void calibrate();
 	void calibrate(uint16_t Scntr);
+	void adjustRMS(float *pIcorr, float *pUcorr);
 	//=== Прерывания
 	static void ZeroCross_int();
 	static void GetADC_int();
@@ -115,6 +117,8 @@ protected:
 	float _Uratio;
 	float _Iratio;
 	bool _ShowLog;
+	float *_pUcorr = NULL, *_pIcorr = NULL;
+	//bool _adjU = false, _adjI = false;
 	
 	hw_timer_t* timerADC = NULL;
 	static hw_timer_t* timerTriac;
@@ -145,10 +149,11 @@ protected:
 
 	volatile static uint32_t _msZCmillis;
     //volatile static bool trOpened;
-
+/*
 #ifdef U_CORRECTION
 	float Ucorr[25] = U_CORRECTION;
 #endif
+*/
 };
 
 #endif // ESP32

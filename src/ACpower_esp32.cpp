@@ -64,16 +64,28 @@ void ACpower::control()
 		if (getI) Unow = sqrt(_U2summ / _Ucntr) * _Uratio;
 		else Inow = sqrt(_I2summ / _Icntr) * _Iratio;
 		
-		#ifdef U_CORRECTION
-		if ((getI) && (rmsCalibrated) && (Unow < 240))
+#ifdef RMS_ADJUSTMENT
+		int n;
+		float X_head, X_tail;
+		
+		if ((getI) && (_pUcorr) && (Unow < 240))
 		{
-			float U_head = Unow / 10;
-			int n = (int)U_head;
-			float U_tail = U_head - n;
-			float Ushift = Ucorr[n] + (Ucorr[n + 1] - Ucorr[n]) * U_tail;
+			X_head = Unow / 10;
+			n = (int)X_head;
+			X_tail = X_head - n;
+		float Ushift = *(_pUcorr + n) + (*(_pUcorr + n + 1) - *(_pUcorr + n)) * X_tail;
 			Unow += Ushift;
 		}
-		#endif
+
+		if ((!getI) && (_pIcorr) && (Inow < 16))
+		{
+			X_head = Inow;
+			n = (int)X_head;
+			X_tail = X_head - n;
+			float Ishift = *(_pIcorr + n) + (*(_pIcorr + n + 1) - *(_pIcorr + n)) * X_tail;
+			Inow += Ishift;
+		}
+#endif
 		
 		Pnow = (uint16_t)(Inow * Unow);
 		
@@ -125,8 +137,16 @@ uint16_t ACpower::get_ZeroLevel(uint8_t z_pin, uint16_t Scntr)
 	return (uint16_t)(ZeroShift / Scntr);
 }
 
+void ACpower::adjustRMS(float *pIcorr, float *pUcorr)
+{
+	_pIcorr = pIcorr;
+	_pUcorr = pUcorr;
+}
+
 void ACpower::stop()
 {
+	_angle = 0;
+	delay(20);
 	timerStop(timerADC);
 	timerDetachInterrupt(timerADC);
 	timerStop(timerTriac);
