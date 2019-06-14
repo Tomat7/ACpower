@@ -19,7 +19,7 @@
 
 #if defined(ESP32)
 
-#define LIBVERSION "ACpower_v20190610 "
+#define LIBVERSION "ACpower_v20190612 "
 
 #define ZC_CRAZY		// если ZeroCross прерывание выполняется слишком часто :-(
 #define ZC_EDGE RISING	// FALLING, RISING
@@ -46,10 +46,11 @@
 
 #define TIMER_TRIAC 0
 #define TIMER_ADC 1
-#define SHIFT_TRY 10000
+#define SHIFT_CHECK_SAMPLES 10000	// количество отсчетов для определения "нулевого" уровня
 
 #define DEBUG1
 #define DEBUG2
+
 
 class ACpower
 {
@@ -77,9 +78,11 @@ public:
 	
 	void control();
 	void check();
+	void stop();
 	void setpower(uint16_t setP);
 	void printConfig();
 	void calibrate();
+	void calibrate(uint16_t Scntr);
 	//=== Прерывания
 	static void ZeroCross_int();
 	static void GetADC_int();
@@ -95,17 +98,19 @@ public:
 	volatile static uint16_t TRIACprio;
 	volatile static uint32_t CounterTRopen;
 	volatile static uint32_t CounterTRclose;
-	volatile static uint64_t TRIACtimerOpen, TRIACtimerClose;
+	volatile static uint32_t TimerTRopen, TimerTRclose;
 	uint32_t RMScore;
 	uint16_t RMSprio;
 #endif
 
+	volatile static uint32_t _Icntr;
+	volatile static uint32_t _Ucntr;
 
 protected:
 	void setup_ZeroCross();
 	void setup_Triac();
 	void setup_ADC();
-	uint16_t get_ZeroLevel(uint8_t zpin);
+	uint16_t get_ZeroLevel(uint8_t z_pin, uint16_t Scntr);
 	
 	float _Uratio;
 	float _Iratio;
@@ -132,8 +137,7 @@ protected:
 	volatile static uint64_t _U2summ;
 
 	volatile static uint32_t _cntr;
-	volatile static uint32_t _Icntr;
-	volatile static uint32_t _Ucntr;
+
 
 	volatile static uint16_t _zerolevel;
 	static uint16_t _Izerolevel;
