@@ -6,74 +6,9 @@
 
 #include "Arduino.h"
 #include "ACpower.h"
-// defines for setting and clearing register bits
+#include "ACpower_macros.h"
 
 #if defined(ESP32)
-
-#define DELAYx vTaskDelay(300 / portTICK_PERIOD_MS)
-
-#define PRINTF(a, ...) Serial.print(a); Serial.println(__VA_ARGS__)
-#define PRINTLN(...) (Serial.println(__VA_ARGS__))
-#define PRINT(...) (Serial.print(__VA_ARGS__))
-
-#ifdef DEBUG1
-#define DPRINTLN(...) (Serial.println(__VA_ARGS__))
-#define DPRINT(...) (Serial.print(__VA_ARGS__))
-#define DPRINTF(a, ...) Serial.print(a); Serial.println(__VA_ARGS__)
-#else
-#define DPRINTLN(...)
-#define DPRINT(...)
-#define DPRINTF(a, ...)
-#endif
-
-#ifdef DEBUG2
-#define D(a) a
-#else
-#define D(a)
-#endif
-
-portMUX_TYPE ACpower::muxADC = portMUX_INITIALIZER_UNLOCKED;
-hw_timer_t *ACpower::timerTriac = NULL;
-volatile SemaphoreHandle_t ACpower::smphRMS;
-
-volatile bool ACpower::getI = true;
-volatile bool ACpower::takeADC = false;
-
-volatile uint16_t ACpower::_angle;
-volatile int16_t ACpower::Xnow;
-volatile uint32_t ACpower::X2;
-
-volatile uint8_t ACpower::_zero = 1;
-volatile uint32_t ACpower::CounterZC;
-volatile uint32_t ACpower::CounterTR;
-
-volatile uint8_t ACpower::_pin;
-uint8_t ACpower::_pinI;
-uint8_t ACpower::_pinU;
-uint8_t ACpower::_pinTriac;
-
-volatile uint32_t ACpower::_cntr = 1;
-volatile uint32_t ACpower::_Icntr = 1;
-volatile uint32_t ACpower::_Ucntr = 1;
-
-volatile uint64_t ACpower::_summ = 0;
-volatile uint64_t ACpower::_I2summ = 0;
-volatile uint64_t ACpower::_U2summ = 0;
-
-volatile uint16_t ACpower::_zerolevel = 0;
-uint16_t ACpower::_Izerolevel = I_ZERO;
-uint16_t ACpower::_Uzerolevel = U_ZERO;
-
-volatile uint32_t ACpower::_msZCmillis;
-//volatile bool ACpower::trOpened;
-
-#ifdef DEBUG2
-volatile uint32_t ACpower::ZCcore, ACpower::ADCcore, ACpower::TRIACcore;
-volatile uint16_t ACpower::ZCprio, ACpower::ADCprio, ACpower::TRIACprio;
-volatile uint32_t ACpower::CounterTRopen;
-volatile uint32_t ACpower::CounterTRclose;
-volatile uint64_t ACpower::TRIACtimerOpen, ACpower::TRIACtimerClose;
-#endif
 
 ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinCurrent)
 {
@@ -99,8 +34,13 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	return;
 }
 
-
 void ACpower::init(float Iratio, float Uratio)
+{  
+	init(Iratio, Uratio, true);
+	return;
+}
+
+void ACpower::init(float Iratio, float Uratio, bool NeedCalibrate)
 {  
 	_Iratio = Iratio;
 	_Uratio = Uratio;
@@ -110,51 +50,9 @@ void ACpower::init(float Iratio, float Uratio)
 	DELAYx;
 	setup_ZeroCross();
 	DELAYx;
+	if (NeedCalibrate) calibrate();
 	setup_ADC();
 	DELAYx;
-	return;
-}
-
-void ACpower::setup_Triac()
-{
-	pinMode(_pinTriac, OUTPUT);
-	_angle = 0;
-	timerTriac = timerBegin(TIMER_TRIAC, 80, true);
-	timerAttachInterrupt(timerTriac, &OpenTriac_int, true);
-	timerAlarmWrite(timerTriac, (ANGLE_MAX + ANGLE_DELTA), true);
-	timerAlarmEnable(timerTriac);
-	timerWrite(timerTriac, _angle);
-	if (_ShowLog) PRINTLN("+ TRIAC setup OK");
-	return;
-}
-
-void ACpower::setup_ZeroCross()
-{
-	takeADC = false;
-	_msZCmillis = millis();
-	smphRMS = xSemaphoreCreateBinary();
-	pinMode(_pinZCross, INPUT_PULLUP);
-	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, ZC_EDGE);
-	if (_ShowLog) PRINTLN("+ ZeroCross setup OK");
-	return;
-}
-
-void ACpower::setup_ADC()
-{
-	uint16_t usADCinterval = (uint16_t)(10000 / ADC_RATE);
-	uint16_t ADCperSet = ADC_RATE * ADC_WAVES;
-	timerADC = timerBegin(TIMER_ADC, 80, true);
-	timerAttachInterrupt(timerADC, &GetADC_int, true);
-	timerAlarmWrite(timerADC, usADCinterval, true);
-	timerAlarmEnable(timerADC);
-	if (_ShowLog) 
-	{
-		PRINTLN("+ ADC Inerrupt setup OK");
-		PRINTF(".  ADC microSeconds between samples: ", usADCinterval);
-		PRINTF(".  ADC samples per half-wave: ", ADC_RATE);
-		PRINTF(".  ADC samples per calculation set: ", ADCperSet);
-		PRINTF(".  ADC half-waves per calculation set: ", ADC_WAVES);
-	}
 	return;
 }
 
@@ -166,16 +64,28 @@ void ACpower::control()
 		if (getI) Unow = sqrt(_U2summ / _Ucntr) * _Uratio;
 		else Inow = sqrt(_I2summ / _Icntr) * _Iratio;
 		
-		#ifdef U_CORRECTION
-		if ((getI) && (rmsCalibrated) && (Unow < 240))
+#ifdef RMS_ADJUSTMENT
+		int n;
+		float X_head, X_tail;
+		
+		if ((getI) && (_pUcorr) && (Unow < 240))
 		{
-			float U_head = Unow / 10;
-			int n = (int)U_head;
-			float U_tail = U_head - n;
-			float Ushift = Ucorr[n] + (Ucorr[n + 1] - Ucorr[n]) * U_tail;
+			X_head = Unow / 10;
+			n = (int)X_head;
+			X_tail = X_head - n;
+		float Ushift = *(_pUcorr + n) + (*(_pUcorr + n + 1) - *(_pUcorr + n)) * X_tail;
 			Unow += Ushift;
 		}
-		#endif
+
+		if ((!getI) && (_pIcorr) && (Inow < 16))
+		{
+			X_head = Inow;
+			n = (int)X_head;
+			X_tail = X_head - n;
+			float Ishift = *(_pIcorr + n) + (*(_pIcorr + n + 1) - *(_pIcorr + n)) * X_tail;
+			Inow += Ishift;
+		}
+#endif
 		
 		Pnow = (uint16_t)(Inow * Unow);
 		
@@ -192,120 +102,58 @@ void ACpower::control()
 	return;
 }
 
-
-void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
+void ACpower::calibrate()
 {
-	
-	if ((millis() - _msZCmillis) > 5)
+	calibrate(SHIFT_CHECK_SAMPLES);
+}
+
+void ACpower::calibrate(uint16_t Scntr)
+{
+	PRINTLN(" + RMS calculating ZERO-shift for U and I...");
+	_angle = 0;
+	_Izerolevel = get_ZeroLevel(_pinI, Scntr);
+	_Uzerolevel = get_ZeroLevel(_pinU, Scntr);
+	if (_ShowLog)
 	{
-		timerStop(timerTriac);
-		digitalWrite(_pinTriac, LOW);
-		//trOpened = false;
-		_msZCmillis = millis();
-		_zero++;
-		CounterZC++;
-		
-		if (_zero >= ADC_WAVES)
-		{
-			portENTER_CRITICAL_ISR(&muxADC);
-			takeADC = false;
-			
-			if (getI)
-			{
-				_pin = _pinU;
-				getI = false;
-				_zerolevel = _Uzerolevel;
-				_I2summ = _summ;
-				_Icntr = _cntr;
-			}
-			else
-			{
-				_pin = _pinI;
-				getI = true;
-				_zerolevel = _Izerolevel;
-				_U2summ = _summ;
-				_Ucntr = _cntr;
-			}
-			
-			adcAttachPin(_pin);
-			_summ = 0;
-			_cntr = 0;
-			_zero = 0;
-			adcStart(_pin);
-			portEXIT_CRITICAL_ISR(&muxADC);
-			xSemaphoreGiveFromISR(smphRMS, NULL);
-		}
-		timerWrite(timerTriac, _angle);
-		timerStart(timerTriac);
-		D(ZCcore = xPortGetCoreID());
-		D(ZCprio = uxTaskPriorityGet(NULL));
-		//D(usZCduration = micros() - _usZCmicros);
+		PRINTF(" . RMS ZeroLevel U: ", _Uzerolevel);
+		PRINTF(" . RMS ZeroLevel I: ", _Izerolevel);
 	}
 	return;
 }
 
-void IRAM_ATTR ACpower::GetADC_int() //__attribute__((always_inline))
+uint16_t ACpower::get_ZeroLevel(uint8_t z_pin, uint16_t Scntr)
 {
-	portENTER_CRITICAL_ISR(&muxADC);
-	
-	if (takeADC)
+	uint32_t ZeroShift = 0;
+	adcAttachPin(z_pin);
+	DELAYx;
+	adcStart(z_pin);
+	for (int i = 0; i < Scntr; i++) 
 	{
-		Xnow = adcEnd(_pin) - _zerolevel;
-		X2 = Xnow * Xnow;
-		if (X2 < ADC_NOISE) X2 = 0;
-		_summ += X2;
-		_cntr++;
-		adcStart(_pin);
+		ZeroShift += adcEnd(z_pin);
+		adcStart(z_pin);
+		delayMicroseconds(50);
 	}
-	else if (_cntr == 0)
-	{
-		adcEnd(_pin);
-		takeADC = true;
-		adcStart(_pin);
-	}
-	
-	portEXIT_CRITICAL_ISR(&ACpower::muxADC);
-	D(ADCcore = xPortGetCoreID());
-	D(ADCprio = uxTaskPriorityGet(NULL));
-	return;
+	adcEnd(z_pin);
+	return (uint16_t)(ZeroShift / Scntr);
 }
 
-void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
+void ACpower::adjustRMS(float *pIcorr, float *pUcorr)
 {
-	uint64_t _tmrTriacNow = timerRead(timerTriac);
-	if ((_tmrTriacNow > ANGLE_MIN) && (_tmrTriacNow < ANGLE_MAX))
-	{
-		digitalWrite(_pinTriac, HIGH);
-		//trOpened = true;
-		D(CounterTRopen++);
-		D(TRIACtimerOpen = _tmrTriacNow);
-	}
-	else
-	{
-		digitalWrite(_pinTriac, LOW);
-		//trOpened = false;
-		D(CounterTRclose++);
-		D(TRIACtimerClose = _tmrTriacNow);
-	}
+	_pIcorr = pIcorr;
+	_pUcorr = pUcorr;
+}
+
+void ACpower::stop()
+{
+	_angle = 0;
+	delay(20);
+	timerStop(timerADC);
+	timerDetachInterrupt(timerADC);
 	timerStop(timerTriac);
-	D(CounterTR++);
-	D(TRIACcore = xPortGetCoreID());
-	D(TRIACprio = uxTaskPriorityGet(NULL));
+	timerDetachInterrupt(timerTriac);
+	detachInterrupt(digitalPinToInterrupt(_pinZCross));
+	digitalWrite(_pinTriac, LOW);
 }
-
-void ACpower::printConfig()
-{
-	Serial.println(F(LIBVERSION));
-	Serial.print(F(".  ZeroCross on pin "));
-	Serial.print(_pinZCross);
-	Serial.print(F(", Triac on pin "));
-	Serial.println(_pinTriac);
-	Serial.print(F(".  U-meter on pin "));
-	Serial.print(_pinU);
-	Serial.print(F(", I-meter on pin "));
-	Serial.println(_pinI);
-}
-
 
 void ACpower::setpower(uint16_t setPower)
 {	
@@ -313,6 +161,20 @@ void ACpower::setpower(uint16_t setPower)
 	else if (setPower < POWER_MIN) Pset = 0;
 	else Pset = setPower;
 	return;
+}
+
+
+void ACpower::printConfig()
+{
+	Serial.println(F(LIBVERSION));
+	Serial.print(F(" . ZeroCross on pin "));
+	Serial.print(_pinZCross);
+	Serial.print(F(", Triac on pin "));
+	Serial.println(_pinTriac);
+	Serial.print(F(" . U-meter on pin "));
+	Serial.print(_pinU);
+	Serial.print(F(", I-meter on pin "));
+	Serial.println(_pinI);
 }
 
 

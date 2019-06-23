@@ -19,7 +19,7 @@
 
 #if defined(ESP32)
 
-#define LIBVERSION "ACpower_v20190610 "
+#define LIBVERSION "ACpower_v20190612 "
 
 #define ZC_CRAZY		// если ZeroCross прерывание выполняется слишком часто :-(
 #define ZC_EDGE RISING	// FALLING, RISING
@@ -31,7 +31,8 @@
 #define U_ZERO 1931     //2113
 #define I_ZERO 1942     //1907
 
-//#define U_CORRECTION {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0.6,0.7,2.8,8.9,12,14.1,15.2,17.3,18.4}
+#define RMS_ADJUSTMENT
+//{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0.6,0.7,2.8,8.9,12,14.1,15.2,17.3,18.4}
 
 #define PIN_U 39
 #define PIN_I 36
@@ -46,9 +47,11 @@
 
 #define TIMER_TRIAC 0
 #define TIMER_ADC 1
+#define SHIFT_CHECK_SAMPLES 10000	// количество отсчетов для определения "нулевого" уровня
 
 #define DEBUG1
 #define DEBUG2
+
 
 class ACpower
 {
@@ -72,13 +75,16 @@ public:
 	volatile static uint32_t X2;
 	
 	void init(float Iratio, float Uratio);
-	void init(float Iratio, float Uratio, bool PrintCfg);
+	void init(float Iratio, float Uratio, bool NeedCalibrate);
 	
 	void control();
 	void check();
+	void stop();
 	void setpower(uint16_t setP);
 	void printConfig();
 	void calibrate();
+	void calibrate(uint16_t Scntr);
+	void adjustRMS(float *pIcorr, float *pUcorr);
 	//=== Прерывания
 	static void ZeroCross_int();
 	static void GetADC_int();
@@ -94,20 +100,25 @@ public:
 	volatile static uint16_t TRIACprio;
 	volatile static uint32_t CounterTRopen;
 	volatile static uint32_t CounterTRclose;
-	volatile static uint64_t TRIACtimerOpen, TRIACtimerClose;
+	volatile static uint32_t TimerTRopen, TimerTRclose;
 	uint32_t RMScore;
 	uint16_t RMSprio;
 #endif
 
+	volatile static uint32_t _Icntr;
+	volatile static uint32_t _Ucntr;
 
 protected:
 	void setup_ZeroCross();
 	void setup_Triac();
 	void setup_ADC();
+	uint16_t get_ZeroLevel(uint8_t z_pin, uint16_t Scntr);
 	
 	float _Uratio;
 	float _Iratio;
 	bool _ShowLog;
+	float *_pUcorr = NULL, *_pIcorr = NULL;
+	//bool _adjU = false, _adjI = false;
 	
 	hw_timer_t* timerADC = NULL;
 	static hw_timer_t* timerTriac;
@@ -130,8 +141,7 @@ protected:
 	volatile static uint64_t _U2summ;
 
 	volatile static uint32_t _cntr;
-	volatile static uint32_t _Icntr;
-	volatile static uint32_t _Ucntr;
+
 
 	volatile static uint16_t _zerolevel;
 	static uint16_t _Izerolevel;
@@ -139,10 +149,11 @@ protected:
 
 	volatile static uint32_t _msZCmillis;
     //volatile static bool trOpened;
-
+/*
 #ifdef U_CORRECTION
 	float Ucorr[25] = U_CORRECTION;
 #endif
+*/
 };
 
 #endif // ESP32

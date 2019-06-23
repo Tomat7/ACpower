@@ -89,9 +89,10 @@ void ACpower::init(float Iratio, float Uratio)
 	pinMode(_pinZCross, INPUT);	//детектор нуля
 	pinMode(_pinTriac, OUTPUT);	//тиристор
 	cbi(PORTD, _pinTriac);		//PORTD &= ~(1 << TRIAC);
-	#ifdef CALIBRATE_ZERO
-	_zeroI = calibrate();
-	#endif
+//#ifdef CALIBRATE_ZERO
+	//_zeroI = 
+	calibrate();
+//#endif
 	
 	// настойка АЦП
 	ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << MUX2) | (0 << MUX1) | (0 << MUX0); // начинаем с "начала"
@@ -232,18 +233,17 @@ void ACpower::printConfig()
 	Serial.println(_pinI);
 }
 
-#ifdef CALIBRATE_ZERO
-int ACpower::calibrate() 
+void ACpower::calibrate() 
 {
 	int zero = 0;
 	for (int i = 0; i < 10; i++) {
 		delay(10);
 		zero += analogRead(_pinI + 14);
 	}
-	zero /= 10;
-	return zero;
+	_zeroI = zero / 10;
+	return;
 }
-#endif
+
 
 #endif // __AVR__
 
