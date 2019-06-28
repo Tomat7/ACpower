@@ -37,7 +37,7 @@
 
 #if defined(__AVR__)
 
-#define LIBVERSION "ACpower_v20181119 zeroI: "
+#define LIBVERSION "ACpower_v20190628 zeroI: "
 
 #define ZERO_OFFSET 10			// минимальный угол открытия. *** возможно нужно больше!! ***
 #define MAX_OFFSET 19000    	// Максимальный угол открытия триака. (определяет минимально возможную мощность)
@@ -49,9 +49,6 @@
 #define WAVE_COUNT 4  		// сколько полуволн (half-wave) собирать/считать ток и напряжение
 
 //#define CALIBRATE_ZERO  // выполнять процедуру калибровки ноля датчика тока
-//#ifndef CALIBRATE_ZERO
-//#define _zeroI 512
-//#endif
 
 //#define U_RATIO 0.2857	// множитель напряжения - теперь он в public и задается при создании объекта
 							// при Uratio=1 подсчет напряжения идет как и раньше - АЦП выдает значение "прямо" в вольтах

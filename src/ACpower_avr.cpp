@@ -31,10 +31,8 @@ volatile unsigned long ACpower::_I2summ;
 volatile unsigned long ACpower::_U2summ;
 volatile unsigned int ACpower::_angle;
 volatile byte ACpower::_pinTriac;
-
-#ifdef CALIBRATE_ZERO
 volatile int ACpower::_zeroI;
-#endif
+
 // === Обработка прерывания по совпадению OCR1A (угла открытия) и счетчика TCNT1 
 // (который сбрасывается в "0" по zero_crosss_int) 
 
@@ -235,12 +233,16 @@ void ACpower::printConfig()
 
 void ACpower::calibrate() 
 {
+#ifdef CALIBRATE_ZERO
 	int zero = 0;
 	for (int i = 0; i < 10; i++) {
 		delay(10);
 		zero += analogRead(_pinI + 14);
 	}
 	_zeroI = zero / 10;
+#else
+	_zeroI = 512;
+#endif
 	return;
 }
 
