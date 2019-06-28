@@ -73,7 +73,7 @@ void ACpower::control()
 			X_head = Unow / 10;
 			n = (int)X_head;
 			X_tail = X_head - n;
-		float Ushift = *(_pUcorr + n) + (*(_pUcorr + n + 1) - *(_pUcorr + n)) * X_tail;
+			float Ushift = *(_pUcorr + n) + (*(_pUcorr + n + 1) - *(_pUcorr + n)) * X_tail;
 			Unow += Ushift;
 		}
 
