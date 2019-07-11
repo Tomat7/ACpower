@@ -23,7 +23,7 @@ https://github.com/Tomat7/ESP32-AC-power
 **Original project of voltage regulator (c) Sebra.**  
 **Modified regulating algorithm (c) Chatterbox.**  
 **Many thanks to both of them!**  
-**Converting to library, combining voltage&current meters, updated algorithm (c) Tomat7.**
+#### Converting to library, combining voltage&current meters, updated algorithm (c) Tomat7.
 =============================================================
    
 * **19.11.2018** Обновлен алгоритм. Старая версия https://github.com/Tomat7/ACpower/tree/base.
@@ -49,4 +49,4 @@ __Будьте аккуратны и внимательны!__
 **Оригинальная идея регулятора напряжения(c) Sebra.**  
 **Модифицированный алгоритм регулирования (c) Chatterbox.**  
 **Огромное им СПАСИБО!**  
-**Перевод в библиотеку, совмещение измерителя тока и напряжения, обновленный алгоритм (c) Tomat7.**  
+#### Перевод в библиотеку, совмещение измерителя тока и напряжения, обновленный алгоритм (c) Tomat7.
