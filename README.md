@@ -20,7 +20,7 @@ https://github.com/Tomat7/ESP32-AC-power
 * **D2 or D3** - ZeroCross detector (originally D3)
 * **any of D0-D7** - Triac (originally D5)
 
-#### Original project (c) Sebra. Regulating algorithm (c) Chatterbox. Many thanks to both of them!
+#### Original project (c) Sebra.  Regulating algorithm (c) Chatterbox.  Many thanks to both of them!
 #### Converting to library, combining voltage&current meters, updated algorithm (c) Tomat7.
 =============================================================
    
@@ -44,5 +44,5 @@ __Будьте аккуратны и внимательны!__
 * **D2 или D3** - детектор нуля
 * **любой из D0-D7** - управление триаком
 
-#### Оригинальная идея (c) Sebra. Алгоритм регулирования (c) Chatterbox. Огромное им СПАСИБО!
+#### Оригинальная идея (c) Sebra.  Алгоритм регулирования (c) Chatterbox.  Огромное им СПАСИБО!
 #### Перевод в библиотеку, совмещение измерителя тока и напряжения, обновленный алгоритм (c) Tomat7.
