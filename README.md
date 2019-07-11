@@ -9,11 +9,9 @@ Arduino Hi-Power regulator for AC devices
 __Warning! Hi voltage is dangerous! Be careful!__
 =================================================
 
-See schemas and other details/examples on:
-
-http://forum.homedistiller.ru/index.php?topic=166750.0
-
-http://forum.homedistiller.ru/index.php?topic=331296.0
+See schemas and other details/examples on:  
+http://forum.homedistiller.ru/index.php?topic=166750.0  
+http://forum.homedistiller.ru/index.php?topic=331296.0  
 
 ### Connections for Arduino Nano (see .jpg for ESP32):
 * **any of A0-A7** - Voltage meter (originally A0)
@@ -36,11 +34,9 @@ __Внимание! Высокое напряжение опасно для жи
 __Будьте аккуратны и внимательны!__
 ====================================================================================
 
-Схемы, примеры и подробности:
-
-http://forum.homedistiller.ru/index.php?topic=166750.0
-
-http://forum.homedistiller.ru/index.php?topic=331296.0
+Схемы, примеры и подробности:  
+http://forum.homedistiller.ru/index.php?topic=166750.0  
+http://forum.homedistiller.ru/index.php?topic=331296.0  
 
 ### Подключения Arduino Nano (для ESP32 по соответствующему .jpg):
 * **любой из A0-A7** - подключение "измерителя" напряжения - трансформатор, диодный мост, делитель напряжения
