@@ -12,6 +12,7 @@ __Warning! Hi voltage is dangerous! Be careful!__
 See schemas and other details/examples on:   
 http://forum.homedistiller.ru/index.php?topic=166750.0  
 http://forum.homedistiller.ru/index.php?topic=331296.0  
+https://github.com/Tomat7/ESP32-AC-power
 
 ### Connections for Arduino Nano (see .jpg for ESP32):
 * **any of A0-A7** - Voltage meter (originally A0)
@@ -36,7 +37,8 @@ __Будьте аккуратны и внимательны!__
 
 Схемы, примеры и подробности:  
 [Регулятор напряжения и тока на Arduino Pro Mini](http://forum.homedistiller.ru/index.php?topic=166750.0)  
-[Регулятор мощности на ESP32 (Arduino)](http://forum.homedistiller.ru/index.php?topic=331296.0)
+[Регулятор мощности на ESP32 (Arduino)](http://forum.homedistiller.ru/index.php?topic=331296.0)  
+[ACpower regulator on ESP32](https://github.com/Tomat7/ESP32-AC-power)
 
 ### Подключения Arduino Nano (для ESP32 по соответствующему .jpg):
 * **любой из A0-A7** - подключение "измерителя" напряжения - трансформатор, диодный мост, делитель напряжения
