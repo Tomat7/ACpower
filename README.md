@@ -10,7 +10,9 @@ __Warning! Hi voltage is dangerous! Be careful!__
 =================================================
 
 See schemas and other details/examples on:
+
 http://forum.homedistiller.ru/index.php?topic=166750.0
+
 http://forum.homedistiller.ru/index.php?topic=331296.0
 
 ### Connections for Arduino Nano (see .jpg for ESP32):
@@ -35,7 +37,9 @@ __Будьте аккуратны и внимательны!__
 ====================================================================================
 
 Схемы, примеры и подробности:
+
 http://forum.homedistiller.ru/index.php?topic=166750.0
+
 http://forum.homedistiller.ru/index.php?topic=331296.0
 
 ### Подключения Arduino Nano (для ESP32 по соответствующему .jpg):
