@@ -20,10 +20,10 @@ https://github.com/Tomat7/ESP32-AC-power
 * **D2 or D3** - ZeroCross detector (originally D3)
 * **any of D0-D7** - Triac (originally D5)
 
-**Original project (c) Sebra.**  
-**Regulating algorithm (c) Chatterbox.**  
-**Many thanks to both of them!**
-#### Converting to library, combining voltage&current meters, updated algorithm (c) Tomat7.
+**Original project of voltage regulator (c) Sebra.**  
+**Modified regulating algorithm (c) Chatterbox.**  
+**Many thanks to both of them!**  
+**Converting to library, combining voltage&current meters, updated algorithm (c) Tomat7.**
 =============================================================
    
 * **19.11.2018** Обновлен алгоритм. Старая версия https://github.com/Tomat7/ACpower/tree/base.
@@ -46,7 +46,7 @@ __Будьте аккуратны и внимательны!__
 * **D2 или D3** - детектор нуля
 * **любой из D0-D7** - управление триаком
 
-**Оригинальная идея (c) Sebra.**  
-**Алгоритм регулирования (c) Chatterbox.**  
-**Огромное им СПАСИБО!**
-#### Перевод в библиотеку, совмещение измерителя тока и напряжения, обновленный алгоритм (c) Tomat7.
+**Оригинальная идея регулятора напряжения(c) Sebra.**  
+**Модифицированный алгоритм регулирования (c) Chatterbox.**  
+**Огромное им СПАСИБО!**  
+**Перевод в библиотеку, совмещение измерителя тока и напряжения, обновленный алгоритм (c) Tomat7.**
