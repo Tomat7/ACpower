@@ -23,7 +23,7 @@ See schemas and other details/examples on http://forum.homedistiller.ru/index.ph
 =============================================================
    
 * **19.11.2018** Обновлен алгоритм. Старый версия https://github.com/Tomat7/ACpower/tree/base.
-* **8.9.2019** Видимо это финальная версия для AVR, ухожу на ESP32 https://tomat.visualstudio.com/ESP32-AC-power
+* **8.5.2019** Видимо это финальная версия для AVR, ухожу на ESP32 https://tomat.visualstudio.com/ESP32-AC-power
 * **21.6.2019** Тестовый код для ESP32 в experimental https://github.com/Tomat7/ACpower/tree/experimental
 * **23.6.2019** Код для ESP32 добавлен в ветку Master. Experimental остаётся для разработки.
 
