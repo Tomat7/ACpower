@@ -14,12 +14,14 @@ void ACpower::setup_Triac()
 {
 	pinMode(_pinTriac, OUTPUT);
 	digitalWrite(_pinTriac, LOW);
-	_angle = 0;
-	timerTriac = timerBegin(TIMER_TRIAC, 80, true);
+	*_pAngle = 0;
+	
+	//if (_phaseQty == 1) _phaseNum = TIMER_TRIAC;
+	timerTriac = timerBegin(_phaseNum, 80, true);
 	timerAttachInterrupt(timerTriac, &OpenTriac_int, true);
 	timerAlarmWrite(timerTriac, (ANGLE_MAX + ANGLE_DELTA), true);
 	timerAlarmEnable(timerTriac);
-	timerWrite(timerTriac, _angle);
+	timerWrite(timerTriac, *_pAngle);
 	if (_ShowLog) PRINTLN(" + TRIAC setup OK");
 	return;
 }
@@ -28,9 +30,15 @@ void ACpower::setup_ZeroCross()
 {
 	takeADC = false;
 	_msZCmillis = millis();
-	smphRMS = xSemaphoreCreateBinary();
 	pinMode(_pinZCross, INPUT_PULLUP);
-	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, ZC_EDGE);
+	
+	if (_phaseQty == 1)
+	{
+		smphRMS = xSemaphoreCreateBinary();
+		attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, ZC_EDGE);
+	}
+	else attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_3phase_int, ZC_EDGE);
+	
 	if (_ShowLog) PRINTLN(" + ZeroCross setup OK");
 	return;
 }

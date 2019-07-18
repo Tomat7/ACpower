@@ -19,6 +19,8 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_pinI = pinCurrent;		// аналоговый пин к которому подключен датчик ACS712 или траснформатор тока
 	_pin = _pinI;
 	_ShowLog = true;
+	_phaseQty = 1;
+	_phaseNum = TIMER_TRIAC;
 	return;
 }
 
@@ -31,28 +33,62 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_pinI = pinCurrent;		// аналоговый пин к которому подключен датчик ACS712 или траснформатор тока
 	_pin = _pinI;
 	_ShowLog = ShowLog;
+	_phaseQty = 1;
+	_phaseNum = TIMER_TRIAC;
 	return;
 }
+
+ACpower::ACpower(byte pinZeroCross, byte pinTriac)
+{
+	Pmax = POWER_MAX * 3;		// а надо ли??
+	_pinZCross = pinZeroCross;	// пин подключения детектора нуля.
+	_pinTriac = pinTriac;		// пин управляющий триаком. 
+	_ShowLog = true;
+	return;
+}
+
+void ACpower::init(uint16_t* pAngle, uint8_t phaseN)
+{  
+	_phaseNum = phaseN;
+	_phaseQty = 3;				// а если только 2?
+	_pAngle = pAngle;
+	init(1, 1, true);
+	//init(Iratio, Uratio, true);
+	return;
+}
+
 
 void ACpower::init(float Iratio, float Uratio)
 {  
 	init(Iratio, Uratio, true);
 	return;
 }
-
+/*
+void ACpower::init(uint16_t* p_pAngle)
+{  
+	_pAngle = p_pAngle;
+	init(1, 1, true);
+	return;
+}
+*/
 void ACpower::init(float Iratio, float Uratio, bool NeedCalibrate)
 {  
-	_Iratio = Iratio;
-	_Uratio = Uratio;
+	//_Iratio = Iratio;
+	//_Uratio = Uratio;
 	if (_ShowLog) printConfig();
 	DELAYx;
 	setup_Triac();
 	DELAYx;
 	setup_ZeroCross();
 	DELAYx;
-	if (NeedCalibrate) calibrate();
-	setup_ADC();
-	DELAYx;
+	if (_phaseQty == 1)
+	{
+		_Iratio = Iratio;
+		_Uratio = Uratio;
+		if (NeedCalibrate) calibrate();
+		setup_ADC();
+		DELAYx;
+	}
 	return;
 }
 
@@ -64,38 +100,18 @@ void ACpower::control()
 		if (getI) Unow = sqrt(_U2summ / _Ucntr) * _Uratio;
 		else Inow = sqrt(_I2summ / _Icntr) * _Iratio;
 		
-#ifdef RMS_ADJUSTMENT
-		int n;
-		float X_head, X_tail;
-		
-		if ((getI) && (_pUcorr) && (Unow < 240))
-		{
-			X_head = Unow / 10;
-			n = (int)X_head;
-			X_tail = X_head - n;
-			float Ushift = *(_pUcorr + n) + (*(_pUcorr + n + 1) - *(_pUcorr + n)) * X_tail;
-			Unow += Ushift;
-		}
-
-		if ((!getI) && (_pIcorr) && (Inow < 16))
-		{
-			X_head = Inow;
-			n = (int)X_head;
-			X_tail = X_head - n;
-			float Ishift = *(_pIcorr + n) + (*(_pIcorr + n + 1) - *(_pIcorr + n)) * X_tail;
-			Inow += Ishift;
-		}
-#endif
-		
+		correctRMS();
 		Pnow = (uint16_t)(Inow * Unow);
 		
 		if (Pset > 0)
 		{
-			Angle += Pset - Pnow;
-			Angle = constrain(Angle, ANGLE_MIN, ANGLE_MAX - ANGLE_DELTA);
+			_angle += Pset - Pnow;
+			_angle = constrain(_angle, ANGLE_MIN, ANGLE_MAX - ANGLE_DELTA);
 		}
-		else Angle = ANGLE_MIN - 500;
-		_angle = Angle;
+		else _angle = ANGLE_MIN - 500;
+		
+		*_pAngle = _angle;
+		Angle = *_pAngle;
 		D(RMScore = xPortGetCoreID());
 		D(RMSprio = uxTaskPriorityGet(NULL));
 	}
@@ -110,7 +126,7 @@ void ACpower::calibrate()
 void ACpower::calibrate(uint16_t Scntr)
 {
 	PRINTLN(" + RMS calculating ZERO-shift for U and I...");
-	_angle = 0;
+	*_pAngle = 0;
 	_Izerolevel = get_ZeroLevel(_pinI, Scntr);
 	_Uzerolevel = get_ZeroLevel(_pinU, Scntr);
 	if (_ShowLog)
@@ -137,18 +153,49 @@ uint16_t ACpower::get_ZeroLevel(uint8_t z_pin, uint16_t Scntr)
 	return (uint16_t)(ZeroShift / Scntr);
 }
 
-void ACpower::adjustRMS(float *pIcorr, float *pUcorr)
+void ACpower::setRMScorrection(float *pIcorr, float *pUcorr)
 {
 	_pIcorr = pIcorr;
 	_pUcorr = pUcorr;
+	_corrRMS = true;
+}
+
+void ACpower::correctRMS()
+{
+	if (_corrRMS)
+	{
+		int n;
+		float X_head, X_tail;
+		
+		if ((getI) && (_pUcorr) && (Unow < 240))
+		{
+			X_head = Unow / 10;
+			n = (int)X_head;
+			X_tail = X_head - n;
+			float Ushift = *(_pUcorr + n) + (*(_pUcorr + n + 1) - *(_pUcorr + n)) * X_tail;
+			Unow += Ushift;
+		}
+
+		if ((!getI) && (_pIcorr) && (Inow < 16))
+		{
+			X_head = Inow;
+			n = (int)X_head;
+			X_tail = X_head - n;
+			float Ishift = *(_pIcorr + n) + (*(_pIcorr + n + 1) - *(_pIcorr + n)) * X_tail;
+			Inow += Ishift;
+		}
+	}
 }
 
 void ACpower::stop()
 {
-	_angle = 0;
+	*_pAngle = 0;
 	delay(20);
-	timerStop(timerADC);
-	timerDetachInterrupt(timerADC);
+	if (_phaseQty == 1)
+	{
+		timerStop(timerADC);
+		timerDetachInterrupt(timerADC);
+	}
 	timerStop(timerTriac);
 	timerDetachInterrupt(timerTriac);
 	detachInterrupt(digitalPinToInterrupt(_pinZCross));
@@ -171,10 +218,13 @@ void ACpower::printConfig()
 	Serial.print(_pinZCross);
 	Serial.print(F(", Triac on pin "));
 	Serial.println(_pinTriac);
-	Serial.print(F(" . U-meter on pin "));
-	Serial.print(_pinU);
-	Serial.print(F(", I-meter on pin "));
-	Serial.println(_pinI);
+	if (_phaseQty == 1)
+	{
+		Serial.print(F(" . U-meter on pin "));
+		Serial.print(_pinU);
+		Serial.print(F(", I-meter on pin "));
+		Serial.println(_pinI);
+	}
 }
 
 

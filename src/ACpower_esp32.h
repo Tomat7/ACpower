@@ -19,7 +19,7 @@
 
 #if defined(ESP32)
 
-#define LIBVERSION "ACpower_v20190612 "
+#define LIBVERSION "ACpower_v20190718 "
 
 #define ZC_CRAZY		// если ZeroCross прерывание выполняется слишком часто :-(
 #define ZC_EDGE RISING	// FALLING, RISING
@@ -31,9 +31,6 @@
 #define U_ZERO 1931     //2113
 #define I_ZERO 1942     //1907
 
-#define RMS_ADJUSTMENT
-//{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0.6,0.7,2.8,8.9,12,14.1,15.2,17.3,18.4}
-
 #define PIN_U 39
 #define PIN_I 36
 #define PIN_ZCROSS 25
@@ -42,11 +39,11 @@
 #define ANGLE_MIN 1000		// минимальный угол открытия - определяет MIN возможную мощность
 #define ANGLE_MAX 10100		// максимальный угол открытия триака - определяет MAX возможную мощность
 #define ANGLE_DELTA 100		// запас по времени для открытия триака
-#define POWER_MAX 3500		// больше этой мощности установить не получится
+#define POWER_MAX 3000		// больше этой мощности установить не получится
 #define POWER_MIN 50		// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
 
 #define TIMER_TRIAC 0
-#define TIMER_ADC 1
+#define TIMER_ADC 3
 #define SHIFT_CHECK_SAMPLES 10000	// количество отсчетов для определения "нулевого" уровня
 
 #define DEBUG1
@@ -56,16 +53,16 @@
 class ACpower
 {
 public:
+	ACpower(uint8_t pinZeroCross, uint8_t pinTriac);	// 3-phase
 	ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent);
 	ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent, bool ShowLog);
 	
 	float Inow = 0;   		// переменная расчета RMS тока
 	float Unow = 0;   		// переменная расчета RMS напряжения
 
-	int16_t Angle = 0;
 	uint16_t Pnow;
 	uint16_t Pset = 0;
-	uint16_t Pmax;
+	uint16_t Pmax = 0;
 	
 	volatile static uint32_t CounterZC;
 	volatile static uint32_t CounterTR;
@@ -73,8 +70,11 @@ public:
 
 	volatile static int16_t Xnow;
 	volatile static uint32_t X2;
+	volatile static uint16_t Angle; 
 	
 	void init(float Iratio, float Uratio);
+	//void init(float Iratio, float Uratio, uint8_t phaseN);	// 3-phase
+	void init(uint16_t* pAngle, uint8_t phaseN);			// 3-phase
 	void init(float Iratio, float Uratio, bool NeedCalibrate);
 	
 	void control();
@@ -84,9 +84,10 @@ public:
 	void printConfig();
 	void calibrate();
 	void calibrate(uint16_t Scntr);
-	void adjustRMS(float *pIcorr, float *pUcorr);
+	void setRMScorrection(float *pIcorr, float *pUcorr);
 	//=== Прерывания
 	static void ZeroCross_int();
+	static void ZeroCross_3phase_int();
 	static void GetADC_int();
 	static void OpenTriac_int(); 
 	//static void CloseTriac_int(); //__attribute__((always_inline));
@@ -112,13 +113,18 @@ protected:
 	void setup_ZeroCross();
 	void setup_Triac();
 	void setup_ADC();
+	void correctRMS();
 	uint16_t get_ZeroLevel(uint8_t z_pin, uint16_t Scntr);
 	
+	int16_t _angle = 0;
+	uint8_t _phaseQty = 1;
+	uint8_t _phaseNum = 0;
 	float _Uratio;
 	float _Iratio;
+	
 	bool _ShowLog;
+	bool _corrRMS = false;
 	float *_pUcorr = NULL, *_pIcorr = NULL;
-	//bool _adjU = false, _adjI = false;
 	
 	hw_timer_t* timerADC = NULL;
 	static hw_timer_t* timerTriac;
@@ -135,13 +141,12 @@ protected:
 	static uint8_t _pinTriac;
 	uint8_t _pinZCross;
 
-	volatile static uint16_t _angle; 
+	volatile static uint16_t* _pAngle;
 	volatile static uint64_t _summ;
 	volatile static uint64_t _I2summ;
 	volatile static uint64_t _U2summ;
 
 	volatile static uint32_t _cntr;
-
 
 	volatile static uint16_t _zerolevel;
 	static uint16_t _Izerolevel;

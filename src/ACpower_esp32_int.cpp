@@ -17,7 +17,8 @@ volatile SemaphoreHandle_t ACpower::smphRMS;
 volatile bool ACpower::getI = true;
 volatile bool ACpower::takeADC = false;
 
-volatile uint16_t ACpower::_angle;
+volatile uint16_t* ACpower::_pAngle;
+volatile uint16_t ACpower::Angle;
 volatile int16_t ACpower::Xnow;
 volatile uint32_t ACpower::X2;
 
@@ -55,7 +56,6 @@ volatile uint32_t ACpower::TimerTRopen, ACpower::TimerTRclose;
 
 void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
-	
 	if ((millis() - _msZCmillis) > 5)
 	{
 		timerStop(timerTriac);
@@ -95,8 +95,29 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 			portEXIT_CRITICAL_ISR(&muxADC);
 			xSemaphoreGiveFromISR(smphRMS, NULL);
 		}
-		timerWrite(timerTriac, _angle);
+		timerWrite(timerTriac, *_pAngle);
 		timerStart(timerTriac);
+		D(ZCcore = xPortGetCoreID());
+		D(ZCprio = uxTaskPriorityGet(NULL));
+		//D(usZCduration = micros() - _usZCmicros);
+	}
+	return;
+}
+
+void IRAM_ATTR ACpower::ZeroCross_3phase_int() //__attribute__((always_inline))
+{
+	if ((millis() - _msZCmillis) > 5)
+	{
+		timerStop(timerTriac);
+		digitalWrite(_pinTriac, LOW);
+		//trOpened = false;
+		_msZCmillis = millis();
+		//_zero++;
+		CounterZC++;
+				
+		timerWrite(timerTriac, *_pAngle);
+		timerStart(timerTriac);
+		Angle = *_pAngle;
 		D(ZCcore = xPortGetCoreID());
 		D(ZCprio = uxTaskPriorityGet(NULL));
 		//D(usZCduration = micros() - _usZCmicros);
