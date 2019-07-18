@@ -54,6 +54,7 @@ volatile uint32_t ACpower::CounterTRclose;
 volatile uint32_t ACpower::TimerTRopen, ACpower::TimerTRclose;
 #endif
 
+
 void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
 	if ((millis() - _msZCmillis) > 5)
@@ -104,6 +105,7 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 	return;
 }
 
+
 void IRAM_ATTR ACpower::ZeroCross_3phase_int() //__attribute__((always_inline))
 {
 	if ((millis() - _msZCmillis) > 5)
@@ -124,6 +126,7 @@ void IRAM_ATTR ACpower::ZeroCross_3phase_int() //__attribute__((always_inline))
 	}
 	return;
 }
+
 
 void IRAM_ATTR ACpower::GetADC_int() //__attribute__((always_inline))
 {
@@ -151,6 +154,7 @@ void IRAM_ATTR ACpower::GetADC_int() //__attribute__((always_inline))
 	return;
 }
 
+
 void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 {
 	uint64_t _tmrTriacNow = timerRead(timerTriac);
@@ -169,7 +173,7 @@ void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 		D(TimerTRclose = _tmrTriacNow);
 	}
 	timerStop(timerTriac);
-	D(CounterTR++);
+	CounterTR++;
 	D(TRIACcore = xPortGetCoreID());
 	D(TRIACprio = uxTaskPriorityGet(NULL));
 }

@@ -21,6 +21,7 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_ShowLog = true;
 	_phaseQty = 1;
 	_phaseNum = TIMER_TRIAC;
+	_pAngle = (uint16_t*) malloc(sizeof(uint16_t));
 	return;
 }
 
@@ -35,6 +36,7 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_ShowLog = ShowLog;
 	_phaseQty = 1;
 	_phaseNum = TIMER_TRIAC;
+	_pAngle = (uint16_t*) malloc(sizeof(uint16_t));
 	return;
 }
 
@@ -52,6 +54,7 @@ void ACpower::init(uint16_t* pAngle, uint8_t phaseN)
 	_phaseNum = phaseN;
 	_phaseQty = 3;				// а если только 2?
 	_pAngle = pAngle;
+	//PRINTF("_pAngle=", (uint32_t)_pAngle, HEX);
 	init(1, 1, true);
 	//init(Iratio, Uratio, true);
 	return;
@@ -75,6 +78,7 @@ void ACpower::init(float Iratio, float Uratio, bool NeedCalibrate)
 {  
 	//_Iratio = Iratio;
 	//_Uratio = Uratio;
+	//_pAngle = (uint16_t*) malloc(sizeof(uint16_t));
 	if (_ShowLog) printConfig();
 	DELAYx;
 	setup_Triac();

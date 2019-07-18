@@ -15,7 +15,6 @@ void ACpower::setup_Triac()
 	pinMode(_pinTriac, OUTPUT);
 	digitalWrite(_pinTriac, LOW);
 	*_pAngle = 0;
-	
 	//if (_phaseQty == 1) _phaseNum = TIMER_TRIAC;
 	timerTriac = timerBegin(_phaseNum, 80, true);
 	timerAttachInterrupt(timerTriac, &OpenTriac_int, true);
