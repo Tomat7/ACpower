@@ -17,7 +17,7 @@ volatile SemaphoreHandle_t ACpower::smphRMS;
 volatile bool ACpower::getI = true;
 volatile bool ACpower::takeADC = false;
 
-volatile uint16_t ACpower::_angle;
+volatile uint16_t ACpower::Angle;
 volatile int16_t ACpower::Xnow;
 volatile uint32_t ACpower::X2;
 
@@ -53,9 +53,9 @@ volatile uint32_t ACpower::CounterTRclose;
 volatile uint32_t ACpower::TimerTRopen, ACpower::TimerTRclose;
 #endif
 
+
 void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 {
-	
 	if ((millis() - _msZCmillis) > 5)
 	{
 		timerStop(timerTriac);
@@ -95,7 +95,7 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 			portEXIT_CRITICAL_ISR(&muxADC);
 			xSemaphoreGiveFromISR(smphRMS, NULL);
 		}
-		timerWrite(timerTriac, _angle);
+		timerWrite(timerTriac, Angle);
 		timerStart(timerTriac);
 		D(ZCcore = xPortGetCoreID());
 		D(ZCprio = uxTaskPriorityGet(NULL));
@@ -103,6 +103,7 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 	}
 	return;
 }
+
 
 void IRAM_ATTR ACpower::GetADC_int() //__attribute__((always_inline))
 {
@@ -130,6 +131,7 @@ void IRAM_ATTR ACpower::GetADC_int() //__attribute__((always_inline))
 	return;
 }
 
+
 void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 {
 	uint64_t _tmrTriacNow = timerRead(timerTriac);
@@ -148,10 +150,10 @@ void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 		D(TimerTRclose = _tmrTriacNow);
 	}
 	timerStop(timerTriac);
-	D(CounterTR++);
+	CounterTR++;
 	D(TRIACcore = xPortGetCoreID());
 	D(TRIACprio = uxTaskPriorityGet(NULL));
 }
 
-
+	
 #endif // ESP32

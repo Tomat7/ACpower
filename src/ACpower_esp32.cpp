@@ -42,17 +42,22 @@ void ACpower::init(float Iratio, float Uratio)
 
 void ACpower::init(float Iratio, float Uratio, bool NeedCalibrate)
 {  
-	_Iratio = Iratio;
-	_Uratio = Uratio;
+	//_Iratio = Iratio;
+	//_Uratio = Uratio;
+	//_pAngle = (uint16_t*) malloc(sizeof(uint16_t));
 	if (_ShowLog) printConfig();
 	DELAYx;
 	setup_Triac();
 	DELAYx;
 	setup_ZeroCross();
 	DELAYx;
+
+	_Iratio = Iratio;
+	_Uratio = Uratio;
 	if (NeedCalibrate) calibrate();
 	setup_ADC();
 	DELAYx;
+
 	return;
 }
 
@@ -64,38 +69,17 @@ void ACpower::control()
 		if (getI) Unow = sqrt(_U2summ / _Ucntr) * _Uratio;
 		else Inow = sqrt(_I2summ / _Icntr) * _Iratio;
 		
-#ifdef RMS_ADJUSTMENT
-		int n;
-		float X_head, X_tail;
-		
-		if ((getI) && (_pUcorr) && (Unow < 240))
-		{
-			X_head = Unow / 10;
-			n = (int)X_head;
-			X_tail = X_head - n;
-			float Ushift = *(_pUcorr + n) + (*(_pUcorr + n + 1) - *(_pUcorr + n)) * X_tail;
-			Unow += Ushift;
-		}
-
-		if ((!getI) && (_pIcorr) && (Inow < 16))
-		{
-			X_head = Inow;
-			n = (int)X_head;
-			X_tail = X_head - n;
-			float Ishift = *(_pIcorr + n) + (*(_pIcorr + n + 1) - *(_pIcorr + n)) * X_tail;
-			Inow += Ishift;
-		}
-#endif
-		
+		correctRMS();
 		Pnow = (uint16_t)(Inow * Unow);
 		
 		if (Pset > 0)
 		{
-			Angle += Pset - Pnow;
-			Angle = constrain(Angle, ANGLE_MIN, ANGLE_MAX - ANGLE_DELTA);
+			_angle += Pset - Pnow;
+			_angle = constrain(_angle, ANGLE_MIN, ANGLE_MAX - ANGLE_DELTA);
 		}
-		else Angle = ANGLE_MIN - 500;
-		_angle = Angle;
+		else _angle = ANGLE_MIN - 500;
+		
+		Angle = _angle;
 		D(RMScore = xPortGetCoreID());
 		D(RMSprio = uxTaskPriorityGet(NULL));
 	}
@@ -110,7 +94,7 @@ void ACpower::calibrate()
 void ACpower::calibrate(uint16_t Scntr)
 {
 	PRINTLN(" + RMS calculating ZERO-shift for U and I...");
-	_angle = 0;
+	Angle = 0;
 	_Izerolevel = get_ZeroLevel(_pinI, Scntr);
 	_Uzerolevel = get_ZeroLevel(_pinU, Scntr);
 	if (_ShowLog)
@@ -137,15 +121,43 @@ uint16_t ACpower::get_ZeroLevel(uint8_t z_pin, uint16_t Scntr)
 	return (uint16_t)(ZeroShift / Scntr);
 }
 
-void ACpower::adjustRMS(float *pIcorr, float *pUcorr)
+void ACpower::setRMScorrection(float *pIcorr, float *pUcorr)
 {
 	_pIcorr = pIcorr;
 	_pUcorr = pUcorr;
+	_corrRMS = true;
+}
+
+void ACpower::correctRMS()
+{
+	if (_corrRMS)
+	{
+		int n;
+		float X_head, X_tail;
+		
+		if ((getI) && (_pUcorr) && (Unow < 240))
+		{
+			X_head = Unow / 10;
+			n = (int)X_head;
+			X_tail = X_head - n;
+			float Ushift = *(_pUcorr + n) + (*(_pUcorr + n + 1) - *(_pUcorr + n)) * X_tail;
+			Unow += Ushift;
+		}
+
+		if ((!getI) && (_pIcorr) && (Inow < 16))
+		{
+			X_head = Inow;
+			n = (int)X_head;
+			X_tail = X_head - n;
+			float Ishift = *(_pIcorr + n) + (*(_pIcorr + n + 1) - *(_pIcorr + n)) * X_tail;
+			Inow += Ishift;
+		}
+	}
 }
 
 void ACpower::stop()
 {
-	_angle = 0;
+	Angle = 0;
 	delay(20);
 	timerStop(timerADC);
 	timerDetachInterrupt(timerADC);
@@ -167,6 +179,7 @@ void ACpower::setpower(uint16_t setPower)
 void ACpower::printConfig()
 {
 	Serial.println(F(LIBVERSION));
+	PRINTF("Pmax: ", Pmax);
 	Serial.print(F(" . ZeroCross on pin "));
 	Serial.print(_pinZCross);
 	Serial.print(F(", Triac on pin "));
