@@ -54,8 +54,9 @@ class ACpower
 {
 public:
 	ACpower(uint8_t pinZeroCross, uint8_t pinTriac);	// 3-phase
-	ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent);
-	ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent, bool ShowLog);
+	ACpower();
+	//ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent);
+	//ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent, bool ShowLog);
 	
 	float Inow = 0;   		// переменная расчета RMS тока
 	float Unow = 0;   		// переменная расчета RMS напряжения
@@ -89,6 +90,7 @@ public:
 	static void ZeroCross_int();
 	static void ZeroCross_3phase_int();
 	static void GetADC_int();
+	//static 
 	static void OpenTriac_int(); 
 	//static void CloseTriac_int(); //__attribute__((always_inline));
 	// === test
@@ -110,6 +112,8 @@ public:
 	volatile static uint32_t _Ucntr;
 
 protected:
+	void OpenTriac();
+	
 	void setup_ZeroCross();
 	void setup_Triac();
 	void setup_ADC();
@@ -140,6 +144,7 @@ protected:
 	static uint8_t _pinU;
 	static uint8_t _pinTriac;
 	uint8_t _pinZCross;
+	uint8_t *_pTriac;
 
 	volatile static uint16_t* _pAngle;
 	volatile static uint64_t _summ;

@@ -9,7 +9,7 @@
 #include "ACpower_macros.h"
 
 #if defined(ESP32)
-
+/*
 ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinCurrent)
 {
 	Pmax = Pm;
@@ -39,14 +39,20 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_pAngle = (uint16_t*) malloc(sizeof(uint16_t));
 	return;
 }
-
-ACpower::ACpower(byte pinZeroCross, byte pinTriac)
+*/
+ACpower::ACpower(uint8_t pinZeroCross, uint8_t pinTriac)
 {
 	Pmax = POWER_MAX * 3;		// а надо ли??
 	_pinZCross = pinZeroCross;	// пин подключения детектора нуля.
 	_pinTriac = pinTriac;		// пин управляющий триаком. 
 	_ShowLog = true;
+	_pTriac = (uint8_t*) malloc(sizeof(uint8_t));
+	*_pTriac = pinTriac;
 	return;
+}
+
+ACpower::ACpower()
+{
 }
 
 void ACpower::init(uint16_t* pAngle, uint8_t phaseN)
@@ -66,14 +72,7 @@ void ACpower::init(float Iratio, float Uratio)
 	init(Iratio, Uratio, true);
 	return;
 }
-/*
-void ACpower::init(uint16_t* p_pAngle)
-{  
-	_pAngle = p_pAngle;
-	init(1, 1, true);
-	return;
-}
-*/
+
 void ACpower::init(float Iratio, float Uratio, bool NeedCalibrate)
 {  
 	//_Iratio = Iratio;
@@ -218,6 +217,7 @@ void ACpower::setpower(uint16_t setPower)
 void ACpower::printConfig()
 {
 	Serial.println(F(LIBVERSION));
+	PRINTF("Pmax: ", Pmax);
 	Serial.print(F(" . ZeroCross on pin "));
 	Serial.print(_pinZCross);
 	Serial.print(F(", Triac on pin "));
@@ -228,6 +228,13 @@ void ACpower::printConfig()
 		Serial.print(_pinU);
 		Serial.print(F(", I-meter on pin "));
 		Serial.println(_pinI);
+	}
+	else 
+	{
+		Serial.print(F(" . PhaseN: "));
+		Serial.println(_phaseNum);		
+		Serial.print(F(" . _pTriac: "));
+		Serial.println(*_pTriac);	
 	}
 }
 
