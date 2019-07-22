@@ -53,10 +53,9 @@
 class ACpower
 {
 public:
-	ACpower(uint8_t pinZeroCross, uint8_t pinTriac);	// 3-phase
-	ACpower();
-	//ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent);
-	//ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent, bool ShowLog);
+	//ACpower();
+	ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent);
+	ACpower(uint16_t Pm, uint8_t pinZeroCross, uint8_t pinTriac, uint8_t pinVoltage, uint8_t pinCurrent, bool ShowLog);
 	
 	float Inow = 0;   		// переменная расчета RMS тока
 	float Unow = 0;   		// переменная расчета RMS напряжения
@@ -74,8 +73,6 @@ public:
 	volatile static uint16_t Angle; 
 	
 	void init(float Iratio, float Uratio);
-	//void init(float Iratio, float Uratio, uint8_t phaseN);	// 3-phase
-	void init(uint16_t* pAngle, uint8_t phaseN);			// 3-phase
 	void init(float Iratio, float Uratio, bool NeedCalibrate);
 	
 	void control();
@@ -88,9 +85,7 @@ public:
 	void setRMScorrection(float *pIcorr, float *pUcorr);
 	//=== Прерывания
 	static void ZeroCross_int();
-	static void ZeroCross_3phase_int();
 	static void GetADC_int();
-	//static 
 	static void OpenTriac_int(); 
 	//static void CloseTriac_int(); //__attribute__((always_inline));
 	// === test
@@ -112,7 +107,6 @@ public:
 	volatile static uint32_t _Ucntr;
 
 protected:
-	void OpenTriac();
 	
 	void setup_ZeroCross();
 	void setup_Triac();
@@ -121,8 +115,6 @@ protected:
 	uint16_t get_ZeroLevel(uint8_t z_pin, uint16_t Scntr);
 	
 	int16_t _angle = 0;
-	uint8_t _phaseQty = 1;
-	uint8_t _phaseNum = 0;
 	float _Uratio;
 	float _Iratio;
 	
@@ -144,9 +136,7 @@ protected:
 	static uint8_t _pinU;
 	static uint8_t _pinTriac;
 	uint8_t _pinZCross;
-	uint8_t *_pTriac;
 
-	volatile static uint16_t* _pAngle;
 	volatile static uint64_t _summ;
 	volatile static uint64_t _I2summ;
 	volatile static uint64_t _U2summ;

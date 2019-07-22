@@ -9,7 +9,7 @@
 #include "ACpower_macros.h"
 
 #if defined(ESP32)
-/*
+
 ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinCurrent)
 {
 	Pmax = Pm;
@@ -19,9 +19,6 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_pinI = pinCurrent;		// аналоговый пин к которому подключен датчик ACS712 или траснформатор тока
 	_pin = _pinI;
 	_ShowLog = true;
-	_phaseQty = 1;
-	_phaseNum = TIMER_TRIAC;
-	_pAngle = (uint16_t*) malloc(sizeof(uint16_t));
 	return;
 }
 
@@ -34,38 +31,8 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_pinI = pinCurrent;		// аналоговый пин к которому подключен датчик ACS712 или траснформатор тока
 	_pin = _pinI;
 	_ShowLog = ShowLog;
-	_phaseQty = 1;
-	_phaseNum = TIMER_TRIAC;
-	_pAngle = (uint16_t*) malloc(sizeof(uint16_t));
 	return;
 }
-*/
-ACpower::ACpower(uint8_t pinZeroCross, uint8_t pinTriac)
-{
-	Pmax = POWER_MAX * 3;		// а надо ли??
-	_pinZCross = pinZeroCross;	// пин подключения детектора нуля.
-	_pinTriac = pinTriac;		// пин управляющий триаком. 
-	_ShowLog = true;
-	_pTriac = (uint8_t*) malloc(sizeof(uint8_t));
-	*_pTriac = pinTriac;
-	return;
-}
-
-ACpower::ACpower()
-{
-}
-
-void ACpower::init(uint16_t* pAngle, uint8_t phaseN)
-{  
-	_phaseNum = phaseN;
-	_phaseQty = 3;				// а если только 2?
-	_pAngle = pAngle;
-	//PRINTF("_pAngle=", (uint32_t)_pAngle, HEX);
-	init(1, 1, true);
-	//init(Iratio, Uratio, true);
-	return;
-}
-
 
 void ACpower::init(float Iratio, float Uratio)
 {  
@@ -84,14 +51,13 @@ void ACpower::init(float Iratio, float Uratio, bool NeedCalibrate)
 	DELAYx;
 	setup_ZeroCross();
 	DELAYx;
-	if (_phaseQty == 1)
-	{
-		_Iratio = Iratio;
-		_Uratio = Uratio;
-		if (NeedCalibrate) calibrate();
-		setup_ADC();
-		DELAYx;
-	}
+
+	_Iratio = Iratio;
+	_Uratio = Uratio;
+	if (NeedCalibrate) calibrate();
+	setup_ADC();
+	DELAYx;
+
 	return;
 }
 
@@ -113,8 +79,7 @@ void ACpower::control()
 		}
 		else _angle = ANGLE_MIN - 500;
 		
-		*_pAngle = _angle;
-		Angle = *_pAngle;
+		Angle = _angle;
 		D(RMScore = xPortGetCoreID());
 		D(RMSprio = uxTaskPriorityGet(NULL));
 	}
@@ -129,7 +94,7 @@ void ACpower::calibrate()
 void ACpower::calibrate(uint16_t Scntr)
 {
 	PRINTLN(" + RMS calculating ZERO-shift for U and I...");
-	*_pAngle = 0;
+	Angle = 0;
 	_Izerolevel = get_ZeroLevel(_pinI, Scntr);
 	_Uzerolevel = get_ZeroLevel(_pinU, Scntr);
 	if (_ShowLog)
@@ -192,13 +157,10 @@ void ACpower::correctRMS()
 
 void ACpower::stop()
 {
-	*_pAngle = 0;
+	Angle = 0;
 	delay(20);
-	if (_phaseQty == 1)
-	{
-		timerStop(timerADC);
-		timerDetachInterrupt(timerADC);
-	}
+	timerStop(timerADC);
+	timerDetachInterrupt(timerADC);
 	timerStop(timerTriac);
 	timerDetachInterrupt(timerTriac);
 	detachInterrupt(digitalPinToInterrupt(_pinZCross));
@@ -222,20 +184,10 @@ void ACpower::printConfig()
 	Serial.print(_pinZCross);
 	Serial.print(F(", Triac on pin "));
 	Serial.println(_pinTriac);
-	if (_phaseQty == 1)
-	{
-		Serial.print(F(" . U-meter on pin "));
-		Serial.print(_pinU);
-		Serial.print(F(", I-meter on pin "));
-		Serial.println(_pinI);
-	}
-	else 
-	{
-		Serial.print(F(" . PhaseN: "));
-		Serial.println(_phaseNum);		
-		Serial.print(F(" . _pTriac: "));
-		Serial.println(*_pTriac);	
-	}
+	Serial.print(F(" . U-meter on pin "));
+	Serial.print(_pinU);
+	Serial.print(F(", I-meter on pin "));
+	Serial.println(_pinI);
 }
 
 
