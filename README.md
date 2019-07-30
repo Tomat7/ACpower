@@ -5,6 +5,7 @@ Arduino Hi-Power regulator for AC devices
 * **8.5.2019** Cleanup code. Possible, it is final for AVR. See https://tomat.visualstudio.com/ESP32-AC-power
 * **21.6.2019** ESP32 test code on experimental branch https://github.com/Tomat7/ACpower/tree/experimental
 * **23.6.2019** ESP32 code merged to Master branch. Experimental still for development.
+* **22.7.2019** 3-phase development separated to https://github.com/Tomat7/ACpower3
 
 __Warning! Hi voltage is dangerous! Be careful!__
 =================================================
@@ -30,6 +31,7 @@ https://github.com/Tomat7/ESP32-AC-power
 * **8.5.2019** Видимо это финальная версия для AVR, ухожу на ESP32 https://tomat.visualstudio.com/ESP32-AC-power
 * **21.6.2019** Тестовый код для ESP32 в experimental https://github.com/Tomat7/ACpower/tree/experimental
 * **23.6.2019** Код для ESP32 добавлен в ветку Master. Experimental остаётся для разработки.
+* **22.7.2019** Разработка 3-х фазного регулятора отделена. https://github.com/Tomat7/ACpower3
 
 __Внимание! Высокое напряжение опасно для жизни!__
 __Будьте аккуратны и внимательны!__
