@@ -34,6 +34,12 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	return;
 }
 
+void ACpower::init()
+{  
+	init(ADC_I_RATIO, ADC_U_RATIO, true);
+	return;
+}
+
 void ACpower::init(float Iratio, float Uratio)
 {  
 	init(Iratio, Uratio, true);
@@ -52,9 +58,9 @@ void ACpower::init(float Iratio, float Uratio, bool NeedCalibrate)
 	setup_ZeroCross();
 	DELAYx;
 
-	_Iratio = Iratio;
-	_Uratio = Uratio;
-	if (NeedCalibrate) calibrate();
+	setRMSratio(Iratio, Uratio);
+	
+	if (NeedCalibrate) setRMSzerolevel();
 	setup_ADC();
 	DELAYx;
 
@@ -86,47 +92,6 @@ void ACpower::control()
 	return;
 }
 
-void ACpower::calibrate()
-{
-	calibrate(SHIFT_CHECK_SAMPLES);
-}
-
-void ACpower::calibrate(uint16_t Scntr)
-{
-	PRINTLN(" + RMS calculating ZERO-shift for U and I...");
-	Angle = 0;
-	_Izerolevel = get_ZeroLevel(_pinI, Scntr);
-	_Uzerolevel = get_ZeroLevel(_pinU, Scntr);
-	if (_ShowLog)
-	{
-		PRINTF(" . RMS ZeroLevel U: ", _Uzerolevel);
-		PRINTF(" . RMS ZeroLevel I: ", _Izerolevel);
-	}
-	return;
-}
-
-uint16_t ACpower::get_ZeroLevel(uint8_t z_pin, uint16_t Scntr)
-{
-	uint32_t ZeroShift = 0;
-	adcAttachPin(z_pin);
-	DELAYx;
-	adcStart(z_pin);
-	for (int i = 0; i < Scntr; i++) 
-	{
-		ZeroShift += adcEnd(z_pin);
-		adcStart(z_pin);
-		delayMicroseconds(50);
-	}
-	adcEnd(z_pin);
-	return (uint16_t)(ZeroShift / Scntr);
-}
-
-void ACpower::setRMScorrection(float *pIcorr, float *pUcorr)
-{
-	_pIcorr = pIcorr;
-	_pUcorr = pUcorr;
-	_corrRMS = true;
-}
 
 void ACpower::correctRMS()
 {

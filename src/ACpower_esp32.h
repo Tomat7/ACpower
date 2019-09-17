@@ -27,9 +27,11 @@
 #define ADC_RATE 200    // количество отсчетов АЦП на ПОЛУволну - 200 (для прерываний)
 #define ADC_WAVES 10    // количество обсчитываемых ПОЛУволн - 4
 #define ADC_NOISE 1000  // попробуем "понизить" шум АЦП
+#define ADC_I_RATIO 0.02	// значение по умолчанию
+#define ADC_U_RATIO 0.2 	// значение по умолчанию
 
-#define U_ZERO 1931     //2113
 #define I_ZERO 1942     //1907
+#define U_ZERO 1931     //2113
 
 #define PIN_U 39
 #define PIN_I 36
@@ -71,7 +73,8 @@ public:
 	volatile static int16_t Xnow;
 	volatile static uint32_t X2;
 	volatile static uint16_t Angle; 
-	
+
+	void init();		// ADC_I_RATIO, ADC_U_RATIO  по умолчанию
 	void init(float Iratio, float Uratio);
 	void init(float Iratio, float Uratio, bool NeedCalibrate);
 	
@@ -80,8 +83,9 @@ public:
 	void stop();
 	void setpower(uint16_t setP);
 	void printConfig();
-	void calibrate();
-	void calibrate(uint16_t Scntr);
+	void setRMSzerolevel();
+	void setRMSzerolevel(uint16_t Scntr);
+	void setRMSratio(float Iratio, float Uratio);
 	void setRMScorrection(float *pIcorr, float *pUcorr);
 	//=== Прерывания
 	static void ZeroCross_int();

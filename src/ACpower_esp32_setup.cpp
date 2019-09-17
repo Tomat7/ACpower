@@ -54,4 +54,54 @@ void ACpower::setup_ADC()
 	return;
 }
 
+
+void ACpower::setRMSzerolevel()
+{
+	setRMSzerolevel(SHIFT_CHECK_SAMPLES);
+}
+
+void ACpower::setRMSzerolevel(uint16_t Scntr)
+{
+	PRINTLN(" + RMS calculating ZERO-shift for U and I...");
+	Angle = 0;
+	_Izerolevel = get_ZeroLevel(_pinI, Scntr);
+	_Uzerolevel = get_ZeroLevel(_pinU, Scntr);
+	if (_ShowLog)
+	{
+		PRINTF(" . RMS ZeroLevel U: ", _Uzerolevel);
+		PRINTF(" . RMS ZeroLevel I: ", _Izerolevel);
+	}
+	return;
+}
+
+uint16_t ACpower::get_ZeroLevel(uint8_t z_pin, uint16_t Scntr)
+{
+	uint32_t ZeroShift = 0;
+	adcAttachPin(z_pin);
+	DELAYx;
+	adcStart(z_pin);
+	for (int i = 0; i < Scntr; i++) 
+	{
+		ZeroShift += adcEnd(z_pin);
+		adcStart(z_pin);
+		delayMicroseconds(50);
+	}
+	adcEnd(z_pin);
+	return (uint16_t)(ZeroShift / Scntr);
+}
+
+void ACpower::setRMSratio(float Iratio, float Uratio)
+{  
+	_Iratio = Iratio;
+	_Uratio = Uratio;
+	return;
+}
+
+void ACpower::setRMScorrection(float *pIcorr, float *pUcorr)
+{
+	_pIcorr = pIcorr;
+	_pUcorr = pUcorr;
+	_corrRMS = true;
+}
+
 #endif // ESP32
