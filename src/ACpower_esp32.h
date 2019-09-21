@@ -66,6 +66,8 @@ public:
 	uint16_t Pset = 0;
 	uint16_t Pmax = 0;
 	
+	String LibVersion = LIBVERSION;
+	
 	volatile static uint32_t CounterZC;
 	volatile static uint32_t CounterTR;
 	uint32_t CounterRMS = 0;
