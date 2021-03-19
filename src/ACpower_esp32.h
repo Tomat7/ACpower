@@ -17,6 +17,8 @@
 #ifndef ACpower_esp32_h
 #define ACpower_esp32_h
 
+#include "esp32-adc-nowait.h"
+
 #if defined(ESP32)
 
 #define LIBVERSION "ACpower_v20190718 "
@@ -62,11 +64,12 @@ public:
 	float Inow = 0;   		// переменная расчета RMS тока
 	float Unow = 0;   		// переменная расчета RMS напряжения
 
-	uint16_t Pnow;
+	uint16_t Pnow, Pavg;
 	uint16_t Pset = 0;
 	uint16_t Pmax = 0;
 	
 	String LibVersion = LIBVERSION;
+	String LibConfig;
 	
 	volatile static uint32_t CounterZC;
 	volatile static uint32_t CounterTR;
@@ -155,6 +158,12 @@ protected:
 
 	volatile static uint32_t _msZCmillis;
     //volatile static bool trOpened;
+	
+	void log_cfg(String str0);
+	void log_cfg(String str0, uint16_t num1);
+	void log_cfg_ln(String str0);
+	void log_cfg_f(String str0, String str1);
+	void log_cfg_f(String str0, uint16_t num1);
 /*
 #ifdef U_CORRECTION
 	float Ucorr[25] = U_CORRECTION;
