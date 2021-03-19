@@ -1,3 +1,9 @@
+Warning! Сurrent version working with ESP32 Arduino core v1.0.4!
+Plan to update soon.
+
+Внимание! Текущая версия работает с ESP32 Arduino core не выше версии 1.0.4!
+Обновления будут скоро.
+
 # ACpower
 Arduino Hi-Power regulator for AC devices
 
