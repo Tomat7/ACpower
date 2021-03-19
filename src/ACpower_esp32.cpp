@@ -77,6 +77,7 @@ void ACpower::control()
 		
 		correctRMS();
 		Pnow = (uint16_t)(Inow * Unow);
+		Pavg = Pnow;
 		
 		if (Pset > 0)
 		{
