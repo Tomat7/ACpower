@@ -28,6 +28,8 @@
 #ifndef ESP32_ADC_NOWAIT_H_
 #define ESP32_ADC_NOWAIT_H_
 
+#ifdef ESP32
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -57,5 +59,7 @@ uint16_t adcEnd(uint8_t pin);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* ESP32 */
 
 #endif /* ESP32_ADC_NOWAIT_H_ */
