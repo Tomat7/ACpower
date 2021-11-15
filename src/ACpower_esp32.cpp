@@ -18,7 +18,7 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_pinU = pinVoltage;		// аналоговый пин к которому подключен модуль измерения напряжения
 	_pinI = pinCurrent;		// аналоговый пин к которому подключен датчик ACS712 или траснформатор тока
 	_pin = _pinI;
-	_ShowLog = true;
+	_ShowLog = false;
 	return;
 }
 
@@ -36,7 +36,7 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 
 void ACpower::init()
 {  
-	init(ADC_I_RATIO, ADC_U_RATIO, true);
+	init(ACPOWER_ADC_I_RATIO, ACPOWER_ADC_U_RATIO, true);
 	return;
 }
 
@@ -82,9 +82,9 @@ void ACpower::control()
 		if (Pset > 0)
 		{
 			_angle += Pset - Pnow;
-			_angle = constrain(_angle, ANGLE_MIN, ANGLE_MAX - ANGLE_DELTA);
+			_angle = constrain(_angle, ACPOWER_ANGLE_MIN, ACPOWER_ANGLE_MAX - ACPOWER_ANGLE_DELTA);
 		}
-		else _angle = ANGLE_MIN - 500;
+		else _angle = ACPOWER_ANGLE_MIN - 500;
 		
 		Angle = _angle;
 		D(RMScore = xPortGetCoreID());
@@ -136,7 +136,7 @@ void ACpower::stop()
 void ACpower::setpower(uint16_t setPower)
 {	
 	if (setPower > Pmax) Pset = Pmax;
-	else if (setPower < POWER_MIN) Pset = 0;
+	else if (setPower < ACPOWER_POWER_MIN) Pset = 0;
 	else Pset = setPower;
 	return;
 }
@@ -144,7 +144,7 @@ void ACpower::setpower(uint16_t setPower)
 
 void ACpower::printConfig()
 {
-	Serial.println(F(LIBVERSION));
+	Serial.println(F(ACPOWER_LIBVERSION));
 	PRINTF("Pmax: ", Pmax);
 	Serial.print(F(" . ZeroCross on pin "));
 	Serial.print(_pinZCross);

@@ -21,38 +21,38 @@
 
 #if defined(ESP32)
 
-#define LIBVERSION "ACpower_v20190718 "
+#define ACPOWER_LIBVERSION "ACpower_v20190718 "
 
-#define ZC_CRAZY		// если ZeroCross прерывание выполняется слишком часто :-(
-#define ZC_EDGE RISING	// FALLING, RISING
+//#define ZC_CRAZY		// если ZeroCross прерывание выполняется слишком часто :-(
+#define ACPOWER_ZCEDGE RISING	// FALLING, RISING
 
-#define ADC_RATE 200    // количество отсчетов АЦП на ПОЛУволну - 200 (для прерываний)
-#define ADC_WAVES 10    // количество обсчитываемых ПОЛУволн - 4
-#define ADC_NOISE 1000  // попробуем "понизить" шум АЦП
-#define ADC_I_RATIO 0.02	// значение по умолчанию
-#define ADC_U_RATIO 0.2 	// значение по умолчанию
+#define ACPOWER_ADC_RATE 200    // количество отсчетов АЦП на ПОЛУволну - 200 (для прерываний)
+#define ACPOWER_ADC_WAVES 10    // количество обсчитываемых ПОЛУволн - 4
+#define ACPOWER_ADC_NOISE 1000  // попробуем "понизить" шум АЦП
+#define ACPOWER_ADC_I_RATIO 0.02	// значение по умолчанию
+#define ACPOWER_ADC_U_RATIO 0.2 	// значение по умолчанию
 
-#define I_ZERO 1942     //1907
-#define U_ZERO 1931     //2113
+//#define I_ZERO 1942     //1907
+//#define U_ZERO 1931     //2113
 
-#define PIN_U 39
-#define PIN_I 36
-#define PIN_ZCROSS 25
-#define PIN_TRIAC 26
+#define ACPOWER_PIN_U 39
+#define ACPOWER_PIN_I 36
+#define ACPOWER_PIN_ZC 25
+#define ACPOWER_PIN_TR 26
 
-#define ANGLE_MIN 1000		// минимальный угол открытия - определяет MIN возможную мощность
-#define ANGLE_MAX 10100		// максимальный угол открытия триака - определяет MAX возможную мощность
-#define ANGLE_DELTA 100		// запас по времени для открытия триака
-#define POWER_MAX 3000		// больше этой мощности установить не получится
-#define POWER_MIN 50		// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
+#define ACPOWER_ANGLE_MIN 1000		// минимальный угол открытия - определяет MIN возможную мощность
+#define ACPOWER_ANGLE_MAX 10100		// максимальный угол открытия триака - определяет MAX возможную мощность
+#define ACPOWER_ANGLE_DELTA 100		// запас по времени для открытия триака
+#define ACPOWER_POWER_MAX 3000		// больше этой мощности установить не получится
+#define ACPOWER_POWER_MIN 50		// минимально допустимая устанавливаемая мощность (наверное можно и меньше)
 
 #define TIMER_TRIAC 0
 #define TIMER_ADC 3
 #define SHIFT_CHECK_SAMPLES 10000	// количество отсчетов для определения "нулевого" уровня
 
+#define DEBUG0
 #define DEBUG1
 #define DEBUG2
-
 
 class ACpower
 {
@@ -68,7 +68,7 @@ public:
 	uint16_t Pset = 0;
 	uint16_t Pmax = 0;
 	
-	String LibVersion = LIBVERSION;
+	String LibVersion = ACPOWER_LIBVERSION;
 	String LibConfig;
 	
 	volatile static uint32_t CounterZC;
@@ -79,7 +79,7 @@ public:
 	volatile static uint32_t X2;
 	volatile static uint16_t Angle; 
 
-	void init();		// ADC_I_RATIO, ADC_U_RATIO  по умолчанию
+	void init();		// ACPOWER_ADC_I_RATIO, ACPOWER_ADC_U_RATIO  по умолчанию
 	void init(float Iratio, float Uratio);
 	void init(float Iratio, float Uratio, bool NeedCalibrate);
 	

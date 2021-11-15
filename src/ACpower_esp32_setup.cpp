@@ -17,7 +17,7 @@ void ACpower::setup_Triac()
 	Angle = 0;
 	timerTriac = timerBegin(TIMER_TRIAC, 80, true);
 	timerAttachInterrupt(timerTriac, &OpenTriac_int, true);
-	timerAlarmWrite(timerTriac, (ANGLE_MAX + ANGLE_DELTA), true);
+	timerAlarmWrite(timerTriac, (ACPOWER_ANGLE_MAX + ACPOWER_ANGLE_DELTA), true);
 	timerAlarmEnable(timerTriac);
 	timerWrite(timerTriac, Angle);
 	log_cfg_ln(" + TRIAC setup OK");
@@ -31,7 +31,7 @@ void ACpower::setup_ZeroCross()
 	_msZCmillis = millis();
 	pinMode(_pinZCross, INPUT_PULLUP);
 	smphRMS = xSemaphoreCreateBinary();
-	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, ZC_EDGE);
+	attachInterrupt(digitalPinToInterrupt(_pinZCross), ZeroCross_int, ACPOWER_ZCEDGE);
 	log_cfg_ln(" + ZeroCross setup OK");
 	// if (_ShowLog) PRINTLN(" + ZeroCross setup OK");
 	return;
@@ -39,8 +39,8 @@ void ACpower::setup_ZeroCross()
 
 void ACpower::setup_ADC()
 {
-	uint16_t usADCinterval = (uint16_t)(10000 / ADC_RATE);
-	uint16_t ADCperSet = ADC_RATE * ADC_WAVES;
+	uint16_t usADCinterval = (uint16_t)(10000 / ACPOWER_ADC_RATE);
+	uint16_t ADCperSet = ACPOWER_ADC_RATE * ACPOWER_ADC_WAVES;
 	timerADC = timerBegin(TIMER_ADC, 80, true);
 	timerAttachInterrupt(timerADC, &GetADC_int, true);
 	timerAlarmWrite(timerADC, usADCinterval, true);
@@ -48,17 +48,17 @@ void ACpower::setup_ADC()
 	
 	log_cfg_ln(" + ADC Inerrupt setup OK");
 	log_cfg_f(" . ADC microSeconds between samples: ", usADCinterval);
-	log_cfg_f(" . ADC samples per half-wave: ", ADC_RATE);
+	log_cfg_f(" . ADC samples per half-wave: ", ACPOWER_ADC_RATE);
 	log_cfg_f(" . ADC samples per calculation set: ", ADCperSet);
-	log_cfg_f(" . ADC half-waves per calculation set: ", ADC_WAVES);
+	log_cfg_f(" . ADC half-waves per calculation set: ", ACPOWER_ADC_WAVES);
 	/*
 	if (_ShowLog) 
 	{
 		PRINTLN(" + ADC Inerrupt setup OK");
 		PRINTF(" . ADC microSeconds between samples: ", usADCinterval);
-		PRINTF(" . ADC samples per half-wave: ", ADC_RATE);
+		PRINTF(" . ADC samples per half-wave: ", ACPOWER_ADC_RATE);
 		PRINTF(" . ADC samples per calculation set: ", ADCperSet);
-		PRINTF(" . ADC half-waves per calculation set: ", ADC_WAVES);
+		PRINTF(" . ADC half-waves per calculation set: ", ACPOWER_ADC_WAVES);
 	}
 	*/
 	return;

@@ -65,7 +65,7 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 		_zero++;
 		CounterZC++;
 		
-		if (_zero >= ADC_WAVES)
+		if (_zero >= ACPOWER_ADC_WAVES)
 		{
 			portENTER_CRITICAL_ISR(&muxADC);
 			takeADC = false;
@@ -113,7 +113,7 @@ void IRAM_ATTR ACpower::GetADC_int() //__attribute__((always_inline))
 	{
 		Xnow = adcEnd(_pin) - _zerolevel;
 		X2 = Xnow * Xnow;
-		if (X2 < ADC_NOISE) X2 = 0;
+		if (X2 < ACPOWER_ADC_NOISE) X2 = 0;
 		_summ += X2;
 		_cntr++;
 		adcStart(_pin);
@@ -135,7 +135,7 @@ void IRAM_ATTR ACpower::GetADC_int() //__attribute__((always_inline))
 void IRAM_ATTR ACpower::OpenTriac_int() //__attribute__((always_inline))
 {
 	uint64_t _tmrTriacNow = timerRead(timerTriac);
-	if ((_tmrTriacNow > ANGLE_MIN) && (_tmrTriacNow < ANGLE_MAX))
+	if ((_tmrTriacNow > ACPOWER_ANGLE_MIN) && (_tmrTriacNow < ACPOWER_ANGLE_MAX))
 	{
 		digitalWrite(_pinTriac, HIGH);
 		//trOpened = true;

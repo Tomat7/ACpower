@@ -18,10 +18,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifdef ESP32
-
 #include "esp32-adc-nowait.h"
 #include "soc/sens_reg.h"
+#include "soc/rtc_io_reg.h"
 
 static uint8_t __aAttenuation = 3;//11db
 static uint8_t __aWidth = 3;//12 bits
@@ -234,4 +233,3 @@ extern bool adcStart(uint8_t pin) __attribute__ ((weak, alias("__adcStart")));
 extern bool adcBusy(uint8_t pin) __attribute__ ((weak, alias("__adcBusy")));
 extern uint16_t adcEnd(uint8_t pin) __attribute__ ((weak, alias("__adcEnd")));
 
-#endif /* ESP32 */
