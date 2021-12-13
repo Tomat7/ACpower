@@ -64,6 +64,7 @@ public:
 	float Inow = 0;   		// переменная расчета RMS тока
 	float Unow = 0;   		// переменная расчета RMS напряжения
 
+	bool ZC;
 	uint16_t Pnow, Pavg;
 	uint16_t Pset = 0;
 	uint16_t Pmax = 0;
@@ -73,8 +74,10 @@ public:
 	
 	volatile static uint32_t CounterZC;
 	volatile static uint32_t CounterTR;
-	uint32_t CounterRMS = 0;
 
+	uint32_t CounterRMS = 0;
+	uint32_t MillisRMS = 0;
+	
 	volatile static int16_t Xnow;
 	volatile static uint32_t X2;
 	volatile static uint16_t Angle; 
@@ -84,6 +87,7 @@ public:
 	void init(float Iratio, float Uratio, bool NeedCalibrate);
 	
 	void control();
+	void control(uint16_t setAngle);
 	void check();
 	void stop();
 	void setpower(uint16_t setP);
@@ -121,6 +125,7 @@ protected:
 	void setup_Triac();
 	void setup_ADC();
 	void correctRMS();
+	void check_ZC();
 	uint16_t get_ZeroLevel(uint8_t z_pin, uint16_t Scntr);
 	
 	int16_t _angle = 0;
@@ -151,12 +156,14 @@ protected:
 	volatile static uint64_t _U2summ;
 
 	volatile static uint32_t _cntr;
+	volatile static uint32_t _zcCounter;
 
 	volatile static uint16_t _zerolevel;
 	static uint16_t _Izerolevel;
 	static uint16_t _Uzerolevel;
 
 	volatile static uint32_t _msZCmillis;
+	uint32_t _zcCheckMillis;
     //volatile static bool trOpened;
 	
 	void log_cfg(String str0);

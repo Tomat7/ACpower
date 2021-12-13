@@ -68,10 +68,14 @@ void ACpower::init(float Iratio, float Uratio, bool NeedCalibrate)
 }
 
 void ACpower::control()
-{	
+{
+	if ((millis() - _zcCheckMillis) > 1000) check_ZC();
+		
 	if (xSemaphoreTake(smphRMS, 0) == pdTRUE)
 	{ 
 		CounterRMS++;
+		MillisRMS = millis();
+		
 		if (getI) Unow = sqrt(_U2summ / _Ucntr) * _Uratio;
 		else Inow = sqrt(_I2summ / _Icntr) * _Iratio;
 		
@@ -91,6 +95,13 @@ void ACpower::control()
 		D(RMSprio = uxTaskPriorityGet(NULL));
 	}
 	return;
+}
+
+void ACpower::control(uint16_t setAngle)
+{
+	control();
+	_angle = setAngle;
+	Angle = _angle;
 }
 
 
@@ -120,6 +131,26 @@ void ACpower::correctRMS()
 		}
 	}
 }
+
+
+void ACpower::check_ZC()
+{
+	_zcCheckMillis = millis();
+
+	if (_zcCounter > 5) 
+	{ 
+		ZC = true; 
+	}
+	else
+	{ 
+		ZC = false;
+		timerStop(timerTriac);
+		digitalWrite(_pinTriac, LOW);
+	}
+	
+	_zcCounter = 0;
+}
+
 
 void ACpower::stop()
 {

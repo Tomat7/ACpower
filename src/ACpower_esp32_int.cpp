@@ -24,6 +24,7 @@ volatile uint32_t ACpower::X2;
 volatile uint8_t ACpower::_zero = 1;
 volatile uint32_t ACpower::CounterZC;
 volatile uint32_t ACpower::CounterTR;
+volatile uint32_t ACpower::_zcCounter;
 
 volatile uint8_t ACpower::_pin;
 uint8_t ACpower::_pinI;
@@ -63,6 +64,7 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 		//trOpened = false;
 		_msZCmillis = millis();
 		_zero++;
+		_zcCounter++;
 		CounterZC++;
 		
 		if (_zero >= ACPOWER_ADC_WAVES)
@@ -100,7 +102,7 @@ void IRAM_ATTR ACpower::ZeroCross_int() //__attribute__((always_inline))
 		D(ZCcore = xPortGetCoreID());
 		D(ZCprio = uxTaskPriorityGet(NULL));
 		//D(usZCduration = micros() - _usZCmicros);
-	}
+		}
 	return;
 }
 
