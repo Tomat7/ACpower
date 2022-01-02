@@ -10,6 +10,7 @@
 
 #if defined(ESP32)
 
+/*
 ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinCurrent)
 {
 	Pmax = Pm;
@@ -21,7 +22,8 @@ ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage,
 	_ShowLog = false;
 	return;
 }
-
+*/
+	
 ACpower::ACpower(uint16_t Pm, byte pinZeroCross, byte pinTriac, byte pinVoltage, byte pinCurrent, bool ShowLog)
 {
 	Pmax = Pm;
