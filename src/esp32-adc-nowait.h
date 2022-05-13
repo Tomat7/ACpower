@@ -25,6 +25,8 @@
  star0413@gmail.com Ilia Starkov
 */
 
+#if defined(ESP32)
+
 #ifndef ESP32_ADC_NOWAIT_H_
 #define ESP32_ADC_NOWAIT_H_
 
@@ -59,3 +61,4 @@ uint16_t adcEnd(uint8_t pin);
 #endif
 
 #endif /* ESP32_ADC_NOWAIT_H_ */
+#endif /* ESP32 */
